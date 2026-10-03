@@ -482,10 +482,9 @@ class Layout {
 	}
 
 	findBreakToken(rendered, source, bounds = this.bounds, prevBreakToken, extract = true) {
-		let overflow = this.findOverflow(rendered, bounds) || this.findBoxOverflow(rendered, bounds);
+		let overflow = this.resolveNoProgress(this.findOverflow(rendered, bounds), rendered, bounds) ||
+			this.progressOnly(this.findBoxOverflow(rendered, bounds), rendered);
 		let breakToken, breakLetter;
-
-		overflow = this.resolveNoProgress(overflow, rendered, bounds);
 
 		let overflowHooks = this.hooks.onOverflow.triggerSync(overflow, rendered, bounds, this);
 		overflowHooks.forEach((newOverflow) => {
@@ -540,10 +539,9 @@ class Layout {
 	 */
 	settleOverflow(rendered, source, bounds, breakToken) {
 		for (let guard = 0; guard < 50; guard++) {
-			let overflow = this.findOverflow(rendered, bounds) ||
-				this.findBoxOverflow(rendered, bounds) ||
-				this.findOrphanedHeader(rendered, source);
-			overflow = this.resolveNoProgress(overflow, rendered, bounds);
+			let overflow = this.resolveNoProgress(this.findOverflow(rendered, bounds), rendered, bounds) ||
+				this.progressOnly(this.findBoxOverflow(rendered, bounds), rendered) ||
+				this.progressOnly(this.findOrphanedHeader(rendered, source), rendered);
 			if (!overflow || !this.hasContentBefore(overflow, rendered)) {
 				break;
 			}
@@ -557,6 +555,19 @@ class Layout {
 			breakToken = earlier;
 		}
 		return breakToken;
+	}
+
+	/**
+	 * Keep a "soft" overflow (a row whose box spills, a table left showing only its header) only when
+	 * breaking there makes progress. Otherwise the page stays as stock Paged.js leaves it: a soft
+	 * overflow at the very top of a page can't be moved anywhere better, and treating it as overflow
+	 * there would make Paged.js skip the item ("Unable to layout item").
+	 * @param {Range|undefined} overflow a soft overflow range
+	 * @param {element} rendered the page's rendered content
+	 * @returns {Range|undefined} the range, or undefined
+	 */
+	progressOnly(overflow, rendered) {
+		return overflow && this.hasContentBefore(overflow, rendered) ? overflow : undefined;
 	}
 
 	/**
@@ -759,7 +770,9 @@ class Layout {
 			node = node.childNodes[overflow.startOffset];
 		}
 		let start = isElement(node) ? node : node.parentElement;
-		let firstFlowChild = (el) => Array.from(el.children).find((c) => !c.hasAttribute("data-repeated-header"));
+		// Descend into the first flowing child: past a table's header, caption and column groups.
+		let firstFlowChild = (el) => Array.from(el.children).find((c) =>
+			!c.hasAttribute("data-repeated-header") && !["THEAD", "CAPTION", "COLGROUP", "COL"].includes(c.nodeName));
 		let candidates = new Set();
 		for (let el = start; el; el = firstFlowChild(el)) {
 			candidates.add(el);
@@ -819,7 +832,7 @@ class Layout {
 		let isBlock = (el) => BLOCK.includes(window.getComputedStyle(el).display);
 		// Leaf block-level pieces, in document order: the places the element can be cut.
 		let pieces = Array.from(start.querySelectorAll("*")).filter((el) =>
-			!el.closest("[data-repeated-header]") && isBlock(el) && !Array.from(el.children).some(isBlock));
+			!el.closest("thead, caption, [data-repeated-header]") && isBlock(el) && !Array.from(el.children).some(isBlock));
 		if (pieces.length < 2) {
 			return;
 		}

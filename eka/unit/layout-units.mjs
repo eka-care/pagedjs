@@ -70,6 +70,26 @@ const results = await page.evaluate(() => {
 	overflow.setStartBefore(wrapper.querySelector("table"));
 	overflow.setEndAfter(wrapper.lastChild);
 	check("hasContentBefore counts an empty box with a height", layout.hasContentBefore(overflow, wrapper) === true, "");
+
+	// relaxBreakAvoid: when the overflow starts at a <table>, the row it relaxes is the first BODY
+	// row (kept whole by tr { break-inside: avoid }), not a header row.
+	wrapper.innerHTML = `<table><thead><tr><th>H</th><th>H2</th></tr></thead><tbody><tr style="break-inside:avoid"><td>${lines(5)}</td><td>z</td></tr></tbody></table>`;
+	overflow = document.createRange();
+	overflow.setStartBefore(wrapper.querySelector("table"));
+	overflow.setEndAfter(wrapper.lastChild);
+	layout.relaxBreakAvoid(overflow, wrapper);
+	const bodyRow = wrapper.querySelector("tbody tr");
+	const headRow = wrapper.querySelector("thead tr");
+	check("relaxBreakAvoid relaxes the first body row, not the header", bodyRow.hasAttribute("data-break-inside-relaxed") && !wrapper.querySelector("thead [data-break-decoration-cloned]") && !headRow.hasAttribute("data-break-inside-relaxed"), "");
+
+	// forceBreakInside: never cuts inside the table's own header.
+	wrapper.innerHTML = `<table><thead><tr><th><div>Head line 1</div><div>Head line 2</div></th><th>H2</th></tr></thead><tbody><tr><td>${lines(80)}</td><td>z</td></tr></tbody></table>`;
+	overflow = document.createRange();
+	overflow.setStartBefore(wrapper.querySelector("table"));
+	overflow.setEndAfter(wrapper.lastChild);
+	const cut2 = layout.forceBreakInside(overflow, wrapper, layout.bounds);
+	const cutNode = cut2 && cut2.startContainer.childNodes[cut2.startOffset];
+	check("forceBreakInside never cuts inside the header", !!cutNode && !cutNode.closest("thead") && cutNode.dataset.line !== undefined, cutNode ? `cut before line ${cutNode.dataset.line}` : "no cut");
 	return out;
 });
 await browser.close();
