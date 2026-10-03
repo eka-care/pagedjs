@@ -1,0 +1,46 @@
+# Eka fork: build the polyfill and run every regression gate (eka/) on every push and pull request.
+# A change merges only when all three pass; see AGENTS.md.
+name: eka regressions
+
+on:
+  push:
+    branches: ["eka/**"]
+  pull_request:
+    branches: ["eka/**", "upstream-v0.4.3"]
+  workflow_dispatch:
+
+jobs:
+  regressions:
+    name: ${{ matrix.gate.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        gate:
+          - { id: suite, name: "Suite: every page (6 setups) + unit checks, with and without integration handlers" }
+          - { id: fine, name: "Fine sweep: every page × 84 setups, with and without integration handlers" }
+          - { id: upstream, name: "Upstream specs: every specs/** document vs stock 0.4.3" }
+    steps:
+      - uses: actions/checkout@v4
+
+      # The 0.4.3 build config uses JSON import assertions, which Node 22 rejects.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Build the polyfill
+        run: |
+          npm ci --ignore-scripts
+          npm run build
+
+      - name: Install the suite and Chromium
+        working-directory: eka
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Run
+        working-directory: eka
+        run: npm run ci:${{ matrix.gate.id }}

@@ -107,12 +107,14 @@ class Layout {
 
 				if (newBreakToken && newBreakToken.equals(prevBreakToken)) {
 					console.warn("Unable to layout item: ", prevNode);
+					this.clampRowspans(wrapper);
 					this.hooks && this.hooks.beforeRenderResult.trigger(undefined, wrapper, this);
 					return new RenderResult(undefined, new OverflowContentError("Unable to layout item", [prevNode]));
 				}
 
 				this.rebuildTableFromBreakToken(newBreakToken, wrapper);
 
+				this.clampRowspans(wrapper);
 				this.hooks && this.hooks.beforeRenderResult.trigger(newBreakToken, wrapper, this);
 				return new RenderResult(newBreakToken);
 			}
@@ -219,6 +221,7 @@ class Layout {
 					if (after) {
 						newBreakToken = new BreakToken(after);
 					} else {
+						this.clampRowspans(wrapper);
 						this.hooks && this.hooks.beforeRenderResult.trigger(undefined, wrapper, this);
 						return new RenderResult(undefined, new OverflowContentError("Unable to layout item", [node]));
 					}
@@ -227,6 +230,7 @@ class Layout {
 
 		}
 
+		this.clampRowspans(wrapper);
 		this.hooks && this.hooks.beforeRenderResult.trigger(newBreakToken, wrapper, this);
 		return new RenderResult(newBreakToken);
 	}
@@ -478,7 +482,8 @@ class Layout {
 	}
 
 	findBreakToken(rendered, source, bounds = this.bounds, prevBreakToken, extract = true) {
-		let overflow = this.findOverflow(rendered, bounds);
+		let overflow = this.resolveNoProgress(this.findOverflow(rendered, bounds), rendered, bounds) ||
+			this.progressOnly(this.findBoxOverflow(rendered, bounds), rendered);
 		let breakToken, breakLetter;
 
 		let overflowHooks = this.hooks.onOverflow.triggerSync(overflow, rendered, bounds, this);
@@ -510,12 +515,440 @@ class Layout {
 			}
 
 			if (breakToken && breakToken.node && extract) {
+				let stayPut = this.headersThatCantJoinFirstRow(rendered, bounds);
 				let removed = this.removeOverflow(overflow, breakLetter);
 				this.hooks && this.hooks.afterOverflowRemoved.trigger(removed, rendered, this);
+				breakToken = this.settleOverflow(rendered, source, bounds, breakToken, prevBreakToken, stayPut);
 			}
 
 		}
 		return breakToken;
+	}
+
+	/**
+	 * Removing the overflow can change the layout of what stays on the page: e.g. the new last table
+	 * row takes the table's bottom border and no longer fits by a fraction of a pixel, so Chrome moves
+	 * it into the hidden overflow column — in the DOM, never printed, and the break token already
+	 * points past it. So measure again, and while something still overflows — content, a table row's
+	 * box, or a table left showing only its header — move the break earlier and remove that too. The
+	 * page never ends up empty: see resolveNoProgress. Each move goes through the same onOverflow /
+	 * onBreakToken hooks as the first one, so a handler that moves or vetoes breaks still applies.
+	 * @param {element} rendered the page's rendered content
+	 * @param {element} source the source content
+	 * @param {object} bounds the page area
+	 * @param {BreakToken} breakToken the break token after the first removal
+	 * @param {BreakToken} prevBreakToken the token this page started from
+	 * @param {Set<element>} [stayPut] tables not to move for a lone header (headersThatCantJoinFirstRow)
+	 * @returns {BreakToken} the (possibly earlier) break token
+	 */
+	settleOverflow(rendered, source, bounds, breakToken, prevBreakToken, stayPut) {
+		for (let guard = 0; guard < 50; guard++) {
+			let overflow = this.resolveNoProgress(this.findOverflow(rendered, bounds), rendered, bounds) ||
+				this.progressOnly(this.findBoxOverflow(rendered, bounds), rendered) ||
+				this.progressOnly(this.findOrphanedHeader(rendered, source, stayPut), rendered);
+			if (!overflow || !this.hasContentBefore(overflow, rendered)) {
+				break;
+			}
+			this.hooks.onOverflow.triggerSync(overflow, rendered, bounds, this).forEach((newOverflow) => {
+				if (typeof newOverflow != "undefined") {
+					overflow = newOverflow;
+				}
+			});
+			if (!overflow) {
+				break;
+			}
+			let earlier = this.createBreakToken(overflow, rendered, source);
+			this.hooks.onBreakToken.triggerSync(earlier, overflow, rendered, this).forEach((newToken) => {
+				if (typeof newToken != "undefined") {
+					earlier = newToken;
+				}
+			});
+			// Never back onto the token the page started from: the chunker would skip the item
+			if (!earlier || !earlier.node || earlier.equals(breakToken) || earlier.equals(prevBreakToken)) {
+				break;
+			}
+			let letter = earlier.offset && earlier.node.textContent ? earlier.node.textContent.charAt(earlier.offset) : undefined;
+			let removed = this.removeOverflow(overflow, letter);
+			this.hooks && this.hooks.afterOverflowRemoved.trigger(removed, rendered, this);
+			breakToken = earlier;
+		}
+		return breakToken;
+	}
+
+	/**
+	 * Keep a "soft" overflow (a row whose box spills, a table left showing only its header) only when
+	 * breaking there makes progress. Otherwise the page stays as stock Paged.js leaves it: a soft
+	 * overflow at the very top of a page can't be moved anywhere better, and treating it as overflow
+	 * there would make Paged.js skip the item ("Unable to layout item").
+	 * @param {Range|undefined} overflow a soft overflow range
+	 * @param {element} rendered the page's rendered content
+	 * @returns {Range|undefined} the range, or undefined
+	 */
+	progressOnly(overflow, rendered) {
+		return overflow && this.hasContentBefore(overflow, rendered) ? overflow : undefined;
+	}
+
+	/**
+	 * When the overflow leaves the page with no progress (nothing but the overflowing element on it),
+	 * that element must break here instead of moving on — otherwise it is pushed to every following
+	 * page, the chunker stops with "Layout repeated", and the rest of the document is silently
+	 * dropped. In order: make it breakable (relaxBreakAvoid), cut it by measurement
+	 * (forceBreakInside), and finally drop this page's repeated table header, as browsers do with a
+	 * header too tall to repeat.
+	 * @param {Range} overflow the overflow found on this page (or undefined)
+	 * @param {element} rendered the page's rendered content
+	 * @param {object} bounds the page area
+	 * @returns {Range|undefined} the overflow to break at; one that still makes no progress if
+	 * nothing helped, or undefined if the content now fits
+	 */
+	resolveNoProgress(overflow, rendered, bounds) {
+		for (let guard = 0; overflow && guard < 20 && !this.hasContentBefore(overflow, rendered); guard++) {
+			if (this.relaxBreakAvoid(overflow, rendered)) {
+				overflow = this.findOverflow(rendered, bounds);
+				continue;
+			}
+			let forced = this.forceBreakInside(overflow, rendered, bounds);
+			if (forced) {
+				return forced;
+			}
+			if (this.dropRepeatedHeaders(overflow, rendered)) {
+				overflow = this.findOverflow(rendered, bounds);
+				continue;
+			}
+			break;
+		}
+		return overflow;
+	}
+
+	/**
+	 * A table row whose content fits but whose box doesn't: Chrome split it across the page edge and
+	 * only empty space, padding or its bottom border spilled into the hidden column, so findOverflow
+	 * (which looks for content) sees nothing and the row prints cut off. Treat the row as overflow so
+	 * it moves to the next page whole. Rows of a header are left to the header logic.
+	 * @param {element} rendered the page's rendered content
+	 * @param {object} bounds the page area
+	 * @returns {Range|undefined} an overflow range starting at that row
+	 */
+	findBoxOverflow(rendered, bounds) {
+		if (!this.hasOverflow(rendered, bounds)) {
+			return;
+		}
+		for (let row of rendered.querySelectorAll("tr")) {
+			if (row.closest("thead, [data-repeated-header]")) {
+				continue;
+			}
+			let spills = Array.from(row.getClientRects()).some((rect) =>
+				rect.height > 0 && (rect.left >= bounds.right || rect.bottom > bounds.bottom + 1));
+			if (spills) {
+				let range = document.createRange();
+				range.setStartBefore(row);
+				range.setEndAfter(rendered.lastChild);
+				return range;
+			}
+		}
+	}
+
+	/**
+	 * A table that starts on this page but shows only its header (or caption) here, all its rows
+	 * having moved on: move the whole table to the next page so the header goes with its rows.
+	 * @param {element} rendered the page's rendered content
+	 * @param {element} source the source content
+	 * @param {Set<element>} [stayPut] tables whose header can't share any page with their first row
+	 * @returns {Range|undefined} an overflow range starting at that table
+	 */
+	findOrphanedHeader(rendered, source, stayPut) {
+		for (let table of rendered.querySelectorAll("table")) {
+			if (table.hasAttribute("data-split-from") || table.closest("[data-repeated-header]") || (stayPut && stayPut.has(table))) {
+				continue;
+			}
+			let hasHeader = table.querySelector(":scope > thead, :scope > caption");
+			let hasRows = table.querySelector(":scope > tbody > tr, :scope > tfoot > tr");
+			let sourceTable = table.dataset.ref && source.querySelector("[data-ref='" + table.dataset.ref + "']");
+			let continues = sourceTable && sourceTable.querySelector(":scope > tbody > tr");
+			if (!hasHeader || hasRows || !continues) {
+				continue;
+			}
+			let after = document.createRange();
+			after.setStartAfter(table);
+			after.setEndAfter(rendered.lastChild);
+			if (after.toString().trim().length) {
+				continue;
+			}
+			let range = document.createRange();
+			range.setStartBefore(table);
+			range.setEndAfter(rendered.lastChild);
+			return range;
+		}
+	}
+
+	/**
+	 * Tables whose header can't share any page with their first body row, because that row holds an
+	 * unbreakable item (an image, a chart) taller than a page minus the header. Moving such a table
+	 * on to keep its header company would only leave the header alone on the next page instead, a
+	 * page later; so findOrphanedHeader leaves it where it is, as stock Paged.js does. Measured
+	 * before the overflow is removed, while the row is still laid out (in the overflow column).
+	 * @param {element} rendered the page's rendered content
+	 * @param {object} bounds the page area
+	 * @returns {Set<element>} the rendered tables to leave in place
+	 */
+	headersThatCantJoinFirstRow(rendered, bounds) {
+		let tables = new Set();
+		for (let table of rendered.querySelectorAll("table")) {
+			let row = table.querySelector(":scope > tbody > tr");
+			if (!row) {
+				continue;
+			}
+			let header = 0;
+			table.querySelectorAll(":scope > thead, :scope > caption").forEach((el) => {
+				header += el.getBoundingClientRect().height;
+			});
+			let tallest = 0;
+			row.querySelectorAll("img, svg, video, canvas, iframe, object, embed").forEach((el) => {
+				tallest = Math.max(tallest, el.getBoundingClientRect().height);
+			});
+			if (header && header + tallest > bounds.height) {
+				tables.add(table);
+			}
+		}
+		return tables;
+	}
+
+	/**
+	 * Hide the repeated <thead> copy of the table(s) where the overflow starts, on this page only —
+	 * the last resort when header plus content can't fit on a page. Hidden, not removed: an
+	 * integration's after-layout handler that adds a <thead> to any split table lacking one would
+	 * otherwise put it back after the page was measured and push content out of print.
+	 * (The <colgroup> copy stays: it has no height, and it keeps the column widths.)
+	 * @param {Range} overflow the overflow range found on this page
+	 * @param {element} rendered the page's rendered content
+	 * @returns {boolean} whether any copy was hidden
+	 */
+	dropRepeatedHeaders(overflow, rendered) {
+		let node = overflow.startContainer;
+		if (isElement(node) && overflow.startOffset < node.childNodes.length) {
+			node = node.childNodes[overflow.startOffset];
+		}
+		let dropped = false;
+		for (let el = isElement(node) ? node : node.parentElement; el && el !== rendered; el = el.parentElement) {
+			if (el.nodeName !== "TABLE") {
+				continue;
+			}
+			el.querySelectorAll(":scope > thead[data-repeated-header]").forEach((copy) => {
+				if (copy.style.getPropertyValue("display") !== "none") {
+					copy.style.setProperty("display", "none", "important");
+					copy.setAttribute("data-repeated-header-dropped", "");
+					dropped = true;
+				}
+			});
+		}
+		return dropped;
+	}
+
+	/**
+	 * A rowspan cell that spans past the rows on its page (the rest moved to the next page) is drawn
+	 * without its bottom edge. Once the page is final, clamp each span to the rows actually here.
+	 * Only the rendered page changes; the next page carries the cell from source as before.
+	 * @param {element} rendered the page's rendered content
+	 * @returns {void}
+	 */
+	clampRowspans(rendered) {
+		rendered.querySelectorAll("thead, tbody, tfoot").forEach((group) => {
+			let rows = Array.from(group.rows);
+			rows.forEach((row, r) => Array.from(row.cells).forEach((cell) => {
+				if (cell.rowSpan > rows.length - r) {
+					cell.rowSpan = rows.length - r;
+				}
+			}));
+		});
+	}
+
+	/**
+	 * Does the page hold any real content before the overflow? A table header (repeated or not) and
+	 * empty ancestor shells don't count: breaking there would make no progress.
+	 * @param {Range} overflow the overflow range found on this page
+	 * @param {element} rendered the page's rendered content
+	 * @returns {boolean} true if some content precedes the overflow
+	 */
+	hasContentBefore(overflow, rendered) {
+		// Skip, with their whole subtree, what is not progress on its own: the repeated header copies,
+		// column groups, and a table's own <thead> or <caption> — a header with no rows under it is
+		// not progress, so a row that doesn't fit under it is made to fit instead of leaving the
+		// header alone on the page. Unless the break is inside that <thead>/<caption>: then its
+		// earlier rows are content (a table authored as all-<thead> rows still breaks normally).
+		let breakNode = overflow.startContainer;
+		let walker = document.createTreeWalker(rendered, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
+			acceptNode: (n) => {
+				if (!isElement(n)) {
+					return NodeFilter.FILTER_ACCEPT;
+				}
+				let skip = n.hasAttribute("data-repeated-header") ||
+					n.nodeName === "COLGROUP" || n.nodeName === "COL" ||
+					((n.nodeName === "THEAD" || n.nodeName === "CAPTION") && !n.contains(breakNode));
+				return skip ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+			}
+		});
+		let node;
+		let isVisibleLeafBox = (el) => {
+			// An empty box with a size (a spacer, a signature box) is content too — but not an
+			// element that contains the break itself.
+			if (el.firstElementChild || el.contains(overflow.startContainer)) {
+				return false;
+			}
+			let rect = el.getBoundingClientRect();
+			return rect.width > 0 && rect.height > 0;
+		};
+		while ((node = walker.nextNode())) {
+			let isContent = isText(node)
+				? node.textContent.trim().length > 0
+				: ["IMG", "SVG", "VIDEO", "CANVAS", "IFRAME", "OBJECT", "EMBED", "HR", "INPUT"].includes(node.nodeName.toUpperCase()) || isVisibleLeafBox(node);
+			if (isContent) {
+				// The first content decides: before the break means the page made progress
+				return overflow.comparePoint(node, 0) < 0;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Make the element where the overflow starts breakable — that element, its first descendants
+	 * (a <tbody> is pushed out by its first row; a row by its cells) and its ancestors:
+	 * - break-inside: avoid is relaxed. It is a preference, not a rule (CSS Fragmentation 3,
+	 *   §4.4): when the element doesn't fit even on a page of its own, the UA breaks inside it.
+	 * - Table cells get box-decoration-break: clone. When a row's content fits but its cells'
+	 *   trailing padding/border overhang the page by a fraction of a pixel, Chrome moves the whole
+	 *   row to the next column instead of breaking between its lines; with clone it fragments.
+	 *   (Cloning also closes the cell's border at the page edge.)
+	 * Only this page's rendered copy changes; the next page re-renders from source.
+	 * @param {Range} overflow the overflow range found on this page
+	 * @param {element} rendered the page's rendered content
+	 * @returns {boolean} whether anything changed (so the caller can stop looping)
+	 */
+	relaxBreakAvoid(overflow, rendered) {
+		let node = overflow.startContainer;
+		if (isElement(node) && overflow.startOffset < node.childNodes.length) {
+			node = node.childNodes[overflow.startOffset];
+		}
+		let start = isElement(node) ? node : node.parentElement;
+		if (!start || start === rendered || !rendered.contains(start)) {
+			return false;
+		}
+		// Descend into the first flowing child: past a table's header, caption and column groups.
+		let firstFlowChild = (el) => Array.from(el.children).find((c) =>
+			!c.hasAttribute("data-repeated-header") && !["THEAD", "CAPTION", "COLGROUP", "COL"].includes(c.nodeName));
+		let candidates = new Set();
+		for (let el = start; el; el = firstFlowChild(el)) {
+			candidates.add(el);
+			if (el.nodeName === "TR") {
+				Array.from(el.cells).forEach((cell) => candidates.add(cell));
+			}
+		}
+		for (let el = start && start.parentElement; el && el !== rendered; el = el.parentElement) {
+			candidates.add(el);
+		}
+		let relaxed = false;
+		for (let candidate of candidates) {
+			if ((candidate.nodeName === "TD" || candidate.nodeName === "TH") && !candidate.hasAttribute("data-break-decoration-cloned")) {
+				candidate.style.setProperty("box-decoration-break", "clone", "important");
+				candidate.style.setProperty("-webkit-box-decoration-break", "clone", "important");
+				candidate.setAttribute("data-break-decoration-cloned", "");
+				relaxed = true;
+			}
+			if (candidate.hasAttribute("data-break-inside-relaxed")) {
+				continue;
+			}
+			let value = window.getComputedStyle(candidate).breakInside;
+			let avoid = ["avoid", "avoid-page", "avoid-column"].includes(value) || candidate.dataset.breakInside === "avoid";
+			if (avoid) {
+				candidate.style.setProperty("break-inside", "auto", "important");
+				candidate.setAttribute("data-break-inside-relaxed", "");
+				if (candidate.dataset.breakInside === "avoid") {
+					candidate.dataset.breakInside = "auto";
+				}
+				relaxed = true;
+			}
+		}
+		return relaxed;
+	}
+
+	/**
+	 * Last resort when the page made no progress and nothing could be relaxed: Chrome moved the
+	 * element out whole although part of it would fit (seen with table rows at sub-pixel page
+	 * edges). Find, by measuring, the longest leading run of its block-level pieces that stays on
+	 * the page, and break right after it. Text is never cut mid-line.
+	 * @param {Range} overflow the overflow range found on this page
+	 * @param {element} rendered the page's rendered content
+	 * @param {object} bounds the page area
+	 * @returns {Range|undefined} an overflow range starting at the first piece that doesn't fit,
+	 * or undefined when the element has fewer than two pieces or not even one fits
+	 */
+	forceBreakInside(overflow, rendered, bounds) {
+		let node = overflow.startContainer;
+		if (isElement(node) && overflow.startOffset < node.childNodes.length) {
+			node = node.childNodes[overflow.startOffset];
+		}
+		let start = isElement(node) ? node : node.parentElement;
+		if (!start || start === rendered) {
+			return;
+		}
+		const BLOCK = ["block", "list-item", "flex", "grid", "table", "flow-root"];
+		let isBlock = (el) => BLOCK.includes(window.getComputedStyle(el).display);
+		// Leaf block-level pieces, in document order: the places the element can be cut.
+		let pieces = Array.from(start.querySelectorAll("*")).filter((el) =>
+			!el.closest("thead, caption, [data-repeated-header]") && isBlock(el) && !Array.from(el.children).some(isBlock));
+		if (pieces.length < 2) {
+			return;
+		}
+		// To measure a cut, hide what it would remove: everything after the last kept piece, up to
+		// `start`. Table cells stay (hiding one would change the columns); their contents are hidden.
+		let hidden = [];
+		let hide = (el) => {
+			hidden.push([el, el.style.getPropertyValue("display"), el.style.getPropertyPriority("display")]);
+			el.style.setProperty("display", "none", "important");
+		};
+		let restore = () => {
+			hidden.reverse().forEach(([el, value, priority]) => el.style.setProperty("display", value, priority));
+			hidden = [];
+		};
+		let hideAfter = (el) => {
+			for (let sib = el.nextElementSibling; sib; sib = sib.nextElementSibling) {
+				if (sib.nodeName === "TD" || sib.nodeName === "TH") {
+					Array.from(sib.children).forEach(hide);
+				} else {
+					hide(sib);
+				}
+			}
+		};
+		let cutBefore = (k) => {
+			for (let el = pieces[k - 1]; el && el !== start; el = el.parentElement) {
+				hideAfter(el);
+			}
+		};
+		// Kept content fits when all of it is in the page's own column: in Paged.js's multi-column
+		// page, overflow goes sideways into the next (hidden) column, not below the page.
+		let fits = () => {
+			let rect = start.getBoundingClientRect();
+			return rect.right <= bounds.right + 1 && rect.bottom <= bounds.bottom + 1;
+		};
+		let lo = 1, hi = pieces.length - 1, best = 0;
+		while (lo <= hi) {
+			let mid = (lo + hi) >> 1;
+			cutBefore(mid);
+			let ok = fits();
+			restore();
+			if (ok) {
+				best = mid;
+				lo = mid + 1;
+			} else {
+				hi = mid - 1;
+			}
+		}
+		if (!best) {
+			return;
+		}
+		let range = document.createRange();
+		range.setStartBefore(pieces[best]);
+		range.setEndAfter(rendered.lastChild);
+		return range;
 	}
 
 	hasOverflow(element, bounds = this.bounds) {

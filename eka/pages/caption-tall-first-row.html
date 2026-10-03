@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>caption-tall-first-row</title>
+<meta name="description" content="A captioned table at the top of a page whose first row (break-inside: avoid) is taller than a page: the caption alone is not progress, so the row breaks under it instead of leaving the caption alone.">
+<!-- Page setup. The regression runner (eka/run.mjs) replaces this block for each page size and
+     margin it sweeps; edit the rules below, not this. -->
+<style data-eka-page-setup>@page { size: A4; margin: 16mm 15mm 15mm 15mm; }</style>
+<style>
+body { font: 12px/1.4 Arial, sans-serif; margin: 0; }
+table { border-collapse: collapse; width: 100%; }
+td, th { border: 1px solid #333; padding: 4px 6px; vertical-align: top; text-align: left; }
+</style>
+<!-- Opens as-is in a browser after `npm run build` at the repo root. The runner swaps in the
+     build under test (and any integration handlers) here. -->
+<script src="../../dist/paged.polyfill.js"></script>
+</head>
+<body>
+<table data-table="t1">
+<caption>Weekly diet plan</caption>
+<thead>
+<tr><th data-col="0">#</th><th data-col="1">Item</th><th data-col="2">Value</th></tr>
+</thead>
+<tbody>
+<tr data-row="0" style="break-inside:avoid"><td data-col="0">1</td><td data-col="1"><div>Plan line 1</div><div>Plan line 2</div><div>Plan line 3</div><div>Plan line 4</div><div>Plan line 5</div><div>Plan line 6</div><div>Plan line 7</div><div>Plan line 8</div><div>Plan line 9</div><div>Plan line 10</div><div>Plan line 11</div><div>Plan line 12</div><div>Plan line 13</div><div>Plan line 14</div><div>Plan line 15</div><div>Plan line 16</div><div>Plan line 17</div><div>Plan line 18</div><div>Plan line 19</div><div>Plan line 20</div><div>Plan line 21</div><div>Plan line 22</div><div>Plan line 23</div><div>Plan line 24</div><div>Plan line 25</div><div>Plan line 26</div><div>Plan line 27</div><div>Plan line 28</div><div>Plan line 29</div><div>Plan line 30</div><div>Plan line 31</div><div>Plan line 32</div><div>Plan line 33</div><div>Plan line 34</div><div>Plan line 35</div><div>Plan line 36</div><div>Plan line 37</div><div>Plan line 38</div><div>Plan line 39</div><div>Plan line 40</div><div>Plan line 41</div><div>Plan line 42</div><div>Plan line 43</div><div>Plan line 44</div><div>Plan line 45</div><div>Plan line 46</div><div>Plan line 47</div><div>Plan line 48</div><div>Plan line 49</div><div>Plan line 50</div><div>Plan line 51</div><div>Plan line 52</div><div>Plan line 53</div><div>Plan line 54</div><div>Plan line 55</div><div>Plan line 56</div><div>Plan line 57</div><div>Plan line 58</div><div>Plan line 59</div><div>Plan line 60</div><div>Plan line 61</div><div>Plan line 62</div><div>Plan line 63</div><div>Plan line 64</div><div>Plan line 65</div><div>Plan line 66</div><div>Plan line 67</div><div>Plan line 68</div><div>Plan line 69</div><div>Plan line 70</div><div>Plan line 71</div><div>Plan line 72</div><div>Plan line 73</div><div>Plan line 74</div><div>Plan line 75</div><div>Plan line 76</div><div>Plan line 77</div><div>Plan line 78</div><div>Plan line 79</div><div>Plan line 80</div><div>Plan line 81</div><div>Plan line 82</div><div>Plan line 83</div><div>Plan line 84</div><div>Plan line 85</div><div>Plan line 86</div><div>Plan line 87</div><div>Plan line 88</div><div>Plan line 89</div><div>Plan line 90</div><div>Plan line 91</div><div>Plan line 92</div><div>Plan line 93</div><div>Plan line 94</div><div>Plan line 95</div><div>Plan line 96</div><div>Plan line 97</div><div>Plan line 98</div><div>Plan line 99</div><div>Plan line 100</div><div>Plan line 101</div><div>Plan line 102</div><div>Plan line 103</div><div>Plan line 104</div><div>Plan line 105</div><div>Plan line 106</div><div>Plan line 107</div><div>Plan line 108</div><div>Plan line 109</div><div>Plan line 110</div><div>Plan line 111</div><div>Plan line 112</div><div>Plan line 113</div><div>Plan line 114</div><div>Plan line 115</div><div>Plan line 116</div><div>Plan line 117</div><div>Plan line 118</div><div>Plan line 119</div><div>Plan line 120</div></td><td data-col="2">x</td></tr>
+<tr data-row="1"><td data-col="0">2</td><td data-col="1">Item 2</td><td data-col="2">3</td></tr>
+<tr data-row="2"><td data-col="0">3</td><td data-col="1">Item 3</td><td data-col="2">6</td></tr>
+<tr data-row="3"><td data-col="0">4</td><td data-col="1">Item 4</td><td data-col="2">9</td></tr>
+<tr data-row="4"><td data-col="0">5</td><td data-col="1">Item 5</td><td data-col="2">12</td></tr>
+<tr data-row="5"><td data-col="0">6</td><td data-col="1">Item 6</td><td data-col="2">15</td></tr>
+<tr data-row="6"><td data-col="0">7</td><td data-col="1">Item 7</td><td data-col="2">18</td></tr>
+<tr data-row="7"><td data-col="0">8</td><td data-col="1">Item 8</td><td data-col="2">21</td></tr>
+<tr data-row="8"><td data-col="0">9</td><td data-col="1">Item 9</td><td data-col="2">24</td></tr>
+<tr data-row="9"><td data-col="0">10</td><td data-col="1">Item 10</td><td data-col="2">27</td></tr>
+<tr data-row="10"><td data-col="0">11</td><td data-col="1">Item 11</td><td data-col="2">30</td></tr>
+<tr data-row="11"><td data-col="0">12</td><td data-col="1">Item 12</td><td data-col="2">33</td></tr>
+<tr data-row="12"><td data-col="0">13</td><td data-col="1">Item 13</td><td data-col="2">36</td></tr>
+<tr data-row="13"><td data-col="0">14</td><td data-col="1">Item 14</td><td data-col="2">39</td></tr>
+<tr data-row="14"><td data-col="0">15</td><td data-col="1">Item 15</td><td data-col="2">42</td></tr>
+<tr data-row="15"><td data-col="0">16</td><td data-col="1">Item 16</td><td data-col="2">45</td></tr>
+<tr data-row="16"><td data-col="0">17</td><td data-col="1">Item 17</td><td data-col="2">48</td></tr>
+<tr data-row="17"><td data-col="0">18</td><td data-col="1">Item 18</td><td data-col="2">51</td></tr>
+<tr data-row="18"><td data-col="0">19</td><td data-col="1">Item 19</td><td data-col="2">54</td></tr>
+<tr data-row="19"><td data-col="0">20</td><td data-col="1">Item 20</td><td data-col="2">57</td></tr>
+<tr data-row="20"><td data-col="0">21</td><td data-col="1">Item 21</td><td data-col="2">60</td></tr>
+<tr data-row="21"><td data-col="0">22</td><td data-col="1">Item 22</td><td data-col="2">63</td></tr>
+<tr data-row="22"><td data-col="0">23</td><td data-col="1">Item 23</td><td data-col="2">66</td></tr>
+<tr data-row="23"><td data-col="0">24</td><td data-col="1">Item 24</td><td data-col="2">69</td></tr>
+<tr data-row="24"><td data-col="0">25</td><td data-col="1">Item 25</td><td data-col="2">72</td></tr>
+<tr data-row="25"><td data-col="0">26</td><td data-col="1">Item 26</td><td data-col="2">75</td></tr>
+<tr data-row="26"><td data-col="0">27</td><td data-col="1">Item 27</td><td data-col="2">78</td></tr>
+<tr data-row="27"><td data-col="0">28</td><td data-col="1">Item 28</td><td data-col="2">81</td></tr>
+<tr data-row="28"><td data-col="0">29</td><td data-col="1">Item 29</td><td data-col="2">84</td></tr>
+<tr data-row="29"><td data-col="0">30</td><td data-col="1">Item 30</td><td data-col="2">87</td></tr>
+<tr data-row="30"><td data-col="0">31</td><td data-col="1">Item 31</td><td data-col="2">90</td></tr>
+</tbody>
+</table>
+</body>
+</html>

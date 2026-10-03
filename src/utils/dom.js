@@ -133,6 +133,39 @@ export function stackChildren(currentNode, stacked) {
 	return stack;
 }
 
+/**
+ * Copy a source table's <colgroup>s and (first) <thead> into its continuation on a new page.
+ * Only the first <thead> is the table's header group; a later one renders as ordinary rows.
+ * The copies are decoration, not flow content: they drop data-ref (never confused with the real
+ * header when Paged.js looks nodes up by ref), move id to data-id like every other split copy (no
+ * duplicate ids; styling targets data-id), and drop forced-break / named-page markers (a header
+ * must not break every continued page).
+ * @param {element} sourceTable the table in the source content
+ * @param {element} tableClone its continuation being built for the new page
+ * @returns {void}
+ */
+function repeatTableHeader(sourceTable, tableClone) {
+	let headerSeen = false;
+	for (let child of Array.from(sourceTable.children)) {
+		let isHeader = child.nodeName === "THEAD" && !headerSeen;
+		if (child.nodeName !== "COLGROUP" && !isHeader) {
+			continue;
+		}
+		headerSeen = headerSeen || isHeader;
+		let copy = child.cloneNode(true);
+		[copy, ...copy.querySelectorAll("*")].forEach((el) => {
+			el.removeAttribute("data-ref");
+			if (el.hasAttribute("id")) {
+				el.setAttribute("data-id", el.getAttribute("id"));
+				el.removeAttribute("id");
+			}
+			["data-break-before", "data-break-after", "data-previous-break-after", "data-page"].forEach((name) => el.removeAttribute(name));
+		});
+		copy.setAttribute("data-repeated-header", "");
+		tableClone.appendChild(copy);
+	}
+}
+
 export function rebuildAncestors(node) {
 	let parent, ancestor;
 	let ancestors = [];
@@ -211,6 +244,16 @@ export function rebuildAncestors(node) {
 			fragment.appendChild(parent);
 		}
 		added.push(parent);
+
+		// A table continuing on a new page repeats its <colgroup>s and <thead>, as browsers do when
+		// printing. Done while the continuation is built, so the header is part of what the page
+		// measures (adding it after layout pushes the page's last row into the hidden overflow).
+		if (parent.nodeName === "TABLE") {
+			let next = ancestors[i + 1] || node;
+			if (["TBODY", "TFOOT", "TR"].includes(next.nodeName)) {
+				repeatTableHeader(ancestor, parent);
+			}
+		}
 
 		// rebuild table rows
 		if (parent.nodeName === "TD" && ancestor.parentElement.contains(ancestor)) {

@@ -1,0 +1,2093 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>diet-chart-product</title>
+<meta name="description" content="The diet chart that surfaced the lost-rows bug: a real product page as Pagify renders it (placeholder header/footer, no patient data). 80 food rows under one 80-row rowspan, a running header and footer, tr { break-inside: avoid } as Pagify ships, and no table handlers.">
+<!-- Page setup. The regression runner (eka/run.mjs) replaces this block for each page size and
+     margin it sweeps; edit the rules below, not this. (The product renders A4, 25mm 20mm.) -->
+<style data-eka-page-setup>@page { size: A4; margin: 25mm 20mm 25mm 20mm; }</style>
+<style>
+@page {
+  @top-center { content: element(page-header); }
+  @bottom-center { content: element(page-footer); }
+}
+#page-header { position: running(page-header); font-size: 10pt; text-align: center; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+#page-footer { position: running(page-footer); font-size: 9pt; text-align: center; border-top: 1px solid #ccc; padding-top: 5px; }
+body { font-family: Arial, sans-serif; font-size: 12pt; line-height: 1.5; }
+/* What Pagify ships */
+tr { break-inside: avoid; }
+</style>
+<!-- Opens as-is in a browser after `npm run build` at the repo root. The runner swaps in the
+     build under test (and any integration handlers) here. -->
+<script src="../../dist/paged.polyfill.js"></script>
+</head>
+<body>
+<header id="page-header">My Document — Confidential</header>
+<footer id="page-footer">My Company — 2026</footer>
+<main>
+      <div
+        style="font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;color:#1a1a1a;padding:0"
+      >
+        <div style="display: flex; align-items: baseline; margin: 0 0 8px">
+          <div style="flex: 1"></div>
+          <p
+            class="text-13 text-center prescription-title-color bold underline italic"
+            style="
+              font-size: 13px;
+              font-weight: 700;
+              text-decoration: underline;
+              font-style: italic;
+              margin: 0;
+              white-space: nowrap;
+            "
+          >
+            Diet Chart
+          </p>
+          <div style="flex: 1; display: flex; justify-content: flex-end">
+            <p
+              style="
+                font-size: 11px;
+                margin: 0;
+                color: #444;
+                white-space: nowrap;
+              "
+            >
+              Valid from: <strong>1 Oct 2026</strong>
+            </p>
+          </div>
+        </div>
+        <table data-table="t1"
+          style="
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+            margin-bottom: 12px;
+          "
+        >
+          <thead>
+            <tr>
+              <th data-col="0"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;background-color:#e0e0e0;font-weight:600;text-align:center;white-space:normal;width:100px"
+              >
+                Day Plan 1
+              </th>
+              <th data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;background-color:#e0e0e0;font-weight:600;text-align:center;white-space:nowrap"
+              >
+                Food Items
+              </th>
+              <th data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;background-color:#e0e0e0;font-weight:600;text-align:center;white-space:nowrap;width:50px"
+              >
+                Qty
+              </th>
+              <th data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;background-color:#e0e0e0;font-weight:600;text-align:center;white-space:nowrap;width:60px"
+              >
+                Kcal
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-row="0">
+              <td data-col="0"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;width:100px;font-weight:600"
+                rowspan="80"
+              >
+                Breakfast
+              </td>
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Afghani chicken – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:109.9g · F:63.7g · Pho:0mg · C:13.3g · Fb:2.1g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>7</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">1,061</div>
+              </td>
+            </tr>
+            <tr data-row="1">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Buttermilk (Chaas/Lassi) – /100 ml
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:2.8g · F:1.5g · Pho:0mg · C:4g · Fb:0g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">40</div>
+              </td>
+            </tr>
+            <tr data-row="2">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Curd rice (Dahi bhaat/Dahi chawal/ Perugu
+                    annam/Daddojanam/Thayir saadam) – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:5.8g · F:4.3g · Pho:0mg · C:32.9g · Fb:2.1g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">196</div>
+              </td>
+            </tr>
+            <tr data-row="3">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Baked egg – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:11.9g · F:12.7g · Pho:0mg · C:15.4g · Fb:1g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">219</div>
+              </td>
+            </tr>
+            <tr data-row="4">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Baked eggs in tomato sauce – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:4.9g · F:5.2g · Pho:0mg · C:3.8g · Fb:0g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">80</div>
+              </td>
+            </tr>
+            <tr data-row="5">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Baked stuffed fish – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:16.1g · F:5.4g · Pho:0mg · C:2.1g · Fb:0.4g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">122</div>
+              </td>
+            </tr>
+            <tr data-row="6">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Beef (Lean, Raw) – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:20.7g · F:5.3g · Pho:0mg · C:0g · Fb:0g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">136</div>
+              </td>
+            </tr>
+            <tr data-row="7">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Beetroot and egg salad (Chukandar aur ande ka salad) – /100
+                    gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:3.4g · F:6.5g · Pho:0mg · C:3.4g · Fb:0.6g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">85</div>
+              </td>
+            </tr>
+            <tr data-row="8">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Bengal fish curry (Bengali machli curry) – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:7.3g · F:7g · Pho:0mg · C:4.4g · Fb:1.9g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">109</div>
+              </td>
+            </tr>
+            <tr data-row="9">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Boiled egg (Ubla anda) – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:4.4g · F:3g · Pho:0mg · C:0.1g · Fb:0.1g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">45</div>
+              </td>
+            </tr>
+            <tr data-row="10">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Boti kebab – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:9.2g · F:9.3g · Pho:0mg · C:3.1g · Fb:0.8g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">133</div>
+              </td>
+            </tr>
+            <tr data-row="11">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Broccoli chicken ala king – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:8g · F:7.6g · Pho:0mg · C:5.3g · Fb:1.9g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">120</div>
+              </td>
+            </tr>
+            <tr data-row="12">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Cajun chicken – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:12.7g · F:14g · Pho:0mg · C:1.9g · Fb:0.9g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">185</div>
+              </td>
+            </tr>
+            <tr data-row="13">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Chicken Breast (Skinless, Raw) – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:31g · F:3.6g · Pho:0mg · C:0g · Fb:0g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">165</div>
+              </td>
+            </tr>
+            <tr data-row="14">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Chicken Liver (Raw) – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:16.9g · F:4.8g · Pho:0mg · C:0.7g · Fb:0g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">119</div>
+              </td>
+            </tr>
+            <tr data-row="15">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Chicken Thigh (With Skin, Raw) – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:18.5g · F:15.5g · Pho:0mg · C:0g · Fb:0g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">209</div>
+              </td>
+            </tr>
+            <tr data-row="16">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Chicken and tomato towers – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:6.9g · F:7g · Pho:0mg · C:2.4g · Fb:1.1g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">101</div>
+              </td>
+            </tr>
+            <tr data-row="17">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Chicken chowmein – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:6.3g · F:8.2g · Pho:0mg · C:13.3g · Fb:1.6g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">151</div>
+              </td>
+            </tr>
+            <tr data-row="18">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Chicken consomme (Clear chicken soup) – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:11.5g · F:12g · Pho:0mg · C:1.2g · Fb:1.6g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">48</div>
+              </td>
+            </tr>
+            <tr data-row="19">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Chicken curry – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:11.8g · F:7.6g · Pho:0mg · C:3.4g · Fb:1.4g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">129</div>
+              </td>
+            </tr>
+            <tr data-row="20">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Chicken kebab – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:3.7g · F:78.9g · Pho:0mg · C:1.1g · Fb:0.2g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">729</div>
+              </td>
+            </tr>
+            <tr data-row="21">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Chicken korma – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:9.8g · F:9.7g · Pho:0mg · C:5.4g · Fb:1.8g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">148</div>
+              </td>
+            </tr>
+            <tr data-row="22">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Chicken lasagne – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:10.5g · F:10.4g · Pho:0mg · C:13.9g · Fb:0.1g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">188</div>
+              </td>
+            </tr>
+            <tr data-row="23">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Chicken manchurian – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:9.5g · F:12g · Pho:0mg · C:6.1g · Fb:0.4g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">142</div>
+              </td>
+            </tr>
+            <tr data-row="24">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Chicken pakora/pakoda – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:6g · F:61g · Pho:0mg · C:4.6g · Fb:1g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">590</div>
+              </td>
+            </tr>
+            <tr data-row="25">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Chicken salad – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:15.3g · F:30.3g · Pho:0mg · C:1.3g · Fb:2g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">338</div>
+              </td>
+            </tr>
+            <tr data-row="26">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Chicken sandwich – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:13.1g · F:11.7g · Pho:0mg · C:25.4g · Fb:1.6g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">253</div>
+              </td>
+            </tr>
+            <tr data-row="27">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Chicken stew – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:7.2g · F:8.9g · Pho:0mg · C:4.4g · Fb:1.8g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">128</div>
+              </td>
+            </tr>
+            <!-- TEST ROW: content taller than one page (70 numbered lines). -->
+            <tr data-row="28">
+              <td data-col="1" style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere">
+                <div>
+                  <div style="font-weight: 500">TEST — Long preparation notes (row taller than a page)</div>
+                  <div style="font-size: 11px; color: #444">Step 01 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 02 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 03 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 04 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 05 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 06 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 07 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 08 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 09 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 10 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 11 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 12 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 13 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 14 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 15 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 16 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 17 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 18 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 19 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 20 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 21 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 22 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 23 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 24 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 25 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 26 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 27 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 28 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 29 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 30 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 31 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 32 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 33 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 34 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 35 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 36 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 37 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 38 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 39 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 40 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 41 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 42 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 43 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 44 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 45 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 46 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 47 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 48 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 49 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 50 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 51 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 52 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 53 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 54 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 55 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 56 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 57 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 58 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 59 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 60 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 61 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 62 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 63 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 64 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 65 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 66 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 67 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 68 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 69 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                  <div style="font-size: 11px; color: #444">Step 70 of 70 — long preparation note to make this row taller than one A4 page.</div>
+                </div>
+              </td>
+              <td data-col="2" style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"><div>1</div></td>
+              <td data-col="3" style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"><div style="font-weight: 600">0</div></td>
+            </tr>
+            <tr data-row="29">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Chicken stock – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:3.7g · F:1.5g · Pho:0mg · C:0.4g · Fb:0.1g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">30</div>
+              </td>
+            </tr>
+            <tr data-row="30">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Chicken sweet and sour – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:6.9g · F:47.6g · Pho:0mg · C:2.7g · Fb:0.6g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">445</div>
+              </td>
+            </tr>
+            <tr data-row="31">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Chicken walnut sandwich (Chicken aur akhrot ke sandwich) –
+                    /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:12.6g · F:16.8g · Pho:0mg · C:22.6g · Fb:1.5g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">286</div>
+              </td>
+            </tr>
+            <tr data-row="32">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Chicken yakhni – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:10.7g · F:6.1g · Pho:0mg · C:0.8g · Fb:0.6g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">99</div>
+              </td>
+            </tr>
+            <tr data-row="33">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Chilli chicken – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:9.6g · F:16.6g · Pho:0mg · C:2.9g · Fb:1g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">199</div>
+              </td>
+            </tr>
+            <tr data-row="34">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Chinese cabbage and meat ball soup – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:5.2g · F:56.6g · Pho:0mg · C:1.4g · Fb:0.6g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">484</div>
+              </td>
+            </tr>
+            <tr data-row="35">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Clams (Raw) – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:12.8g · F:1g · Pho:0mg · C:2.6g · Fb:0g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">74</div>
+              </td>
+            </tr>
+            <tr data-row="36">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Crab (Raw) – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:18.1g · F:1.1g · Pho:0mg · C:0g · Fb:0g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">87</div>
+              </td>
+            </tr>
+            <tr data-row="37">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Crispy baked fish – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:11g · F:6.4g · Pho:0mg · C:9.6g · Fb:1.2g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">138</div>
+              </td>
+            </tr>
+            <tr data-row="38">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Cuttlefish (Raw) – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:16.2g · F:0.9g · Pho:0mg · C:0.8g · Fb:0g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">79</div>
+              </td>
+            </tr>
+            <tr data-row="39">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Deviled egg – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:5g · F:7.7g · Pho:0mg · C:2.2g · Fb:1.2g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">99</div>
+              </td>
+            </tr>
+            <tr data-row="40">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Duck Meat (Raw) – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:18.3g · F:5.9g · Pho:0mg · C:0g · Fb:0g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">132</div>
+              </td>
+            </tr>
+            <tr data-row="41">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Egg White (Raw) – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:10.9g · F:0.2g · Pho:0mg · C:0.7g · Fb:0g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">52</div>
+              </td>
+            </tr>
+            <tr data-row="42">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Egg Yolk (Raw) – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:15.9g · F:26.5g · Pho:0mg · C:3.6g · Fb:0g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">322</div>
+              </td>
+            </tr>
+            <tr data-row="43">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Egg and tomato sandwich (Ande aur tamatar ka sandwich) –
+                    /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:7.7g · F:10.5g · Pho:0mg · C:25.9g · Fb:1.8g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">222</div>
+              </td>
+            </tr>
+            <tr data-row="44">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Egg curry (Anda curry) – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:5.4g · F:8.8g · Pho:0mg · C:4g · Fb:2.1g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">118</div>
+              </td>
+            </tr>
+            <tr data-row="45">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Egg cutlet (Anda cutlet) – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:2.4g · F:60.2g · Pho:0mg · C:5.8g · Fb:0.6g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">575</div>
+              </td>
+            </tr>
+            <tr data-row="46">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Egg drop soup – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:12.9g · F:13.5g · Pho:0mg · C:1.1g · Fb:0.8g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">27</div>
+              </td>
+            </tr>
+            <tr data-row="47">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Egg halwa (Ande ka halwa) – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:7.9g · F:13.4g · Pho:0mg · C:39.6g · Fb:0.5g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">300</div>
+              </td>
+            </tr>
+            <tr data-row="48">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Egg in a pepper – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:12.6g · F:8.7g · Pho:0mg · C:0.2g · Fb:0.2g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">129</div>
+              </td>
+            </tr>
+            <tr data-row="49">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Egg pakora/pakoda (Ande ke pakode) – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:2.8g · F:75.9g · Pho:0mg · C:4.5g · Fb:0.9g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">711</div>
+              </td>
+            </tr>
+            <tr data-row="50">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Egg sandwich (Ande ka sandwich) – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:8.7g · F:15.8g · Pho:0mg · C:29.2g · Fb:1.9g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">286</div>
+              </td>
+            </tr>
+            <tr data-row="51">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Egg sauce – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:6g · F:11.1g · Pho:0mg · C:5.9g · Fb:0.1g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">147</div>
+              </td>
+            </tr>
+            <tr data-row="52">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Egg, Whole (Raw) – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:12.6g · F:9.5g · Pho:0mg · C:0.7g · Fb:0g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">143</div>
+              </td>
+            </tr>
+            <tr data-row="53">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Fish - Hilsa (Raw) – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:18g · F:13g · Pho:0mg · C:0g · Fb:0g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">188</div>
+              </td>
+            </tr>
+            <tr data-row="54">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Fish - Katla (Raw) – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:16.9g · F:3.2g · Pho:0mg · C:0g · Fb:0g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">95</div>
+              </td>
+            </tr>
+            <tr data-row="55">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Fish - Mackerel (Raw) – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:18.6g · F:13.9g · Pho:0mg · C:0g · Fb:0g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">205</div>
+              </td>
+            </tr>
+            <tr data-row="56">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Fish - Pomfret (Raw) – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:18.9g · F:2.3g · Pho:0mg · C:0g · Fb:0g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">96</div>
+              </td>
+            </tr>
+            <tr data-row="57">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Fish - Rawas/Salmon (Indian) – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:19.2g · F:6.2g · Pho:0mg · C:0g · Fb:0g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">135</div>
+              </td>
+            </tr>
+            <tr data-row="58">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Fish - Rohu (Raw) – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:17.5g · F:3g · Pho:0mg · C:0g · Fb:0g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">97</div>
+              </td>
+            </tr>
+            <tr data-row="59">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Fish - Salmon (Raw) – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:19.8g · F:6.3g · Pho:0mg · C:0g · Fb:0g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">142</div>
+              </td>
+            </tr>
+            <tr data-row="60">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Fish - Sardine (Raw) – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:20.9g · F:11.5g · Pho:0mg · C:0g · Fb:0g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">208</div>
+              </td>
+            </tr>
+            <tr data-row="61">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Fish - Seer/Surmai (Raw) – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:19.7g · F:4.2g · Pho:0mg · C:0g · Fb:0g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">118</div>
+              </td>
+            </tr>
+            <tr data-row="62">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Fish - Tilapia (Raw) – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:20.1g · F:1.7g · Pho:0mg · C:0g · Fb:0g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">96</div>
+              </td>
+            </tr>
+            <tr data-row="63">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Fish - Tuna (Raw) – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:23.3g · F:4.9g · Pho:0mg · C:0g · Fb:0g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">144</div>
+              </td>
+            </tr>
+            <tr data-row="64">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Fish curry (Machli curry) – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:8.8g · F:6.7g · Pho:0mg · C:3.8g · Fb:1.9g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">111</div>
+              </td>
+            </tr>
+            <tr data-row="65">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Fish cutlet (Machli ka cutlet) – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:2.8g · F:70.1g · Pho:0mg · C:3.1g · Fb:0.5g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">655</div>
+              </td>
+            </tr>
+            <tr data-row="66">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Fish finger – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:5.7g · F:55.8g · Pho:0mg · C:4.5g · Fb:0.3g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">543</div>
+              </td>
+            </tr>
+            <tr data-row="67">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Fish orly – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:5.9g · F:58.2g · Pho:0mg · C:4.3g · Fb:0.3g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">564</div>
+              </td>
+            </tr>
+            <tr data-row="68">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Fish pakora/pakoda – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:6g · F:59.5g · Pho:0mg · C:4.6g · Fb:1g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">577</div>
+              </td>
+            </tr>
+            <tr data-row="69">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Fish pie – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:9.3g · F:5.8g · Pho:0mg · C:7.7g · Fb:0.8g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">121</div>
+              </td>
+            </tr>
+            <tr data-row="70">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Fish sandwich – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:4.7g · F:10.4g · Pho:0mg · C:10.1g · Fb:1.2g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">150</div>
+              </td>
+            </tr>
+            <tr data-row="71">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Fish souffle – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:10.5g · F:8.5g · Pho:0mg · C:5.1g · Fb:0.2g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">140</div>
+              </td>
+            </tr>
+            <tr data-row="72">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Fish tikka – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:16g · F:4.1g · Pho:0mg · C:3.9g · Fb:1.2g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">117</div>
+              </td>
+            </tr>
+            <tr data-row="73">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Fried Egg – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:11.6g · F:19.6g · Pho:0mg · C:0.3g · Fb:0.3g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">224</div>
+              </td>
+            </tr>
+            <tr data-row="74">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Fried chicken with tomato sauce (Fried chicken tamatar ki
+                    chutney kay saath) – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:11.5g · F:7.6g · Pho:0mg · C:2.5g · Fb:1.1g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">125</div>
+              </td>
+            </tr>
+            <tr data-row="75">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Fried fish (Indian style) (Tali hui machli) – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:4.3g · F:68.9g · Pho:0mg · C:5.4g · Fb:0.6g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">659</div>
+              </td>
+            </tr>
+            <tr data-row="76">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Fried fish and Chips (English Style) (Tali hui machli aur
+                    chips) – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:3.4g · F:69.7g · Pho:0mg · C:2.8g · Fb:0.3g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">652</div>
+              </td>
+            </tr>
+            <tr data-row="77">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Handi chicken – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:12.3g · F:12.5g · Pho:0mg · C:1.5g · Fb:0.7g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">166</div>
+              </td>
+            </tr>
+            <tr data-row="78">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">
+                    Hariyali Fish Tikka – /100 gm
+                  </div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:14g · F:9.4g · Pho:0mg · C:2.2g · Fb:1g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">150</div>
+              </td>
+            </tr>
+            <tr data-row="79">
+              <td data-col="1"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;overflow-wrap:anywhere"
+              >
+                <div>
+                  <div style="font-weight: 500">Hot fish souffle – /100 gm</div>
+                  <div style="font-size: 9px; color: #666; padding-top: 1px">
+                    P:11.2g · F:9.2g · Pho:0mg · C:3.7g · Fb:0.1g · Cal:0mg ·
+                    VitA(RAE):0mcg · VitB12:0mcg
+                  </div>
+                </div>
+              </td>
+              <td data-col="2"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:50px"
+              >
+                <div>1</div>
+              </td>
+              <td data-col="3"
+                style="border:0.5px solid #333333;padding:5px 8px;font-family:&#x27;DM Sans&#x27;, Arial, sans-serif;font-size:12px;vertical-align:top;text-align:center;width:60px"
+              >
+                <div style="font-weight: 600">143</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+</body>
+</html>
