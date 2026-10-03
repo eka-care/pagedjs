@@ -564,7 +564,7 @@ class Layout {
 				}
 			}
 			let earlier = this.createBreakToken(overflow, rendered, source);
-			if (!earlier || !earlier.node) {
+			if (!earlier || !earlier.node || earlier.equals(breakToken)) {
 				break;
 			}
 			let letter = earlier.offset && earlier.node.textContent ? earlier.node.textContent.charAt(earlier.offset) : undefined;
@@ -685,30 +685,50 @@ class Layout {
 		if (pieces.length < 2) {
 			return;
 		}
-		let saved = pieces.map((el) => [el.style.getPropertyValue("display"), el.style.getPropertyPriority("display")]);
-		let hideFrom = (k) => pieces.forEach((el, i) => {
-			if (i >= k) {
-				el.style.setProperty("display", "none", "important");
-			} else {
-				el.style.setProperty("display", saved[i][0], saved[i][1]);
+		// To measure a cut, hide what it would remove: everything after the last kept piece, up to
+		// `start`. Table cells stay (hiding one would change the columns); their contents are hidden.
+		let hidden = [];
+		let hide = (el) => {
+			hidden.push([el, el.style.getPropertyValue("display"), el.style.getPropertyPriority("display")]);
+			el.style.setProperty("display", "none", "important");
+		};
+		let restore = () => {
+			hidden.reverse().forEach(([el, value, priority]) => el.style.setProperty("display", value, priority));
+			hidden = [];
+		};
+		let hideAfter = (el) => {
+			for (let sib = el.nextElementSibling; sib; sib = sib.nextElementSibling) {
+				if (sib.nodeName === "TD" || sib.nodeName === "TH") {
+					Array.from(sib.children).forEach(hide);
+				} else {
+					hide(sib);
+				}
 			}
-		});
+		};
+		let cutBefore = (k) => {
+			for (let el = pieces[k - 1]; el && el !== start; el = el.parentElement) {
+				hideAfter(el);
+			}
+		};
+		// Kept content fits when all of it is in the page's own column: in Paged.js's multi-column
+		// page, overflow goes sideways into the next (hidden) column, not below the page.
 		let fits = () => {
 			let rect = start.getBoundingClientRect();
-			return rect.left < bounds.right && Math.floor(rect.bottom) <= Math.round(bounds.bottom);
+			return rect.right <= bounds.right + 1 && rect.bottom <= bounds.bottom + 1;
 		};
 		let lo = 1, hi = pieces.length - 1, best = 0;
 		while (lo <= hi) {
 			let mid = (lo + hi) >> 1;
-			hideFrom(mid);
-			if (fits()) {
+			cutBefore(mid);
+			let ok = fits();
+			restore();
+			if (ok) {
 				best = mid;
 				lo = mid + 1;
 			} else {
 				hi = mid - 1;
 			}
 		}
-		pieces.forEach((el, i) => el.style.setProperty("display", saved[i][0], saved[i][1]));
 		if (!best) {
 			return;
 		}
