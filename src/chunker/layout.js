@@ -520,8 +520,39 @@ class Layout {
 			if (breakToken && breakToken.node && extract) {
 				let removed = this.removeOverflow(overflow, breakLetter);
 				this.hooks && this.hooks.afterOverflowRemoved.trigger(removed, rendered, this);
+				breakToken = this.settleOverflow(rendered, source, bounds, breakToken);
 			}
 
+		}
+		return breakToken;
+	}
+
+	/**
+	 * Removing the overflow can change the layout of what stays on the page: e.g. the new last table
+	 * row takes the table's bottom border and no longer fits by a fraction of a pixel, so Chrome moves
+	 * it into the hidden overflow column — in the DOM, never printed, and the break token already
+	 * points past it. So measure again, and while content still overflows (with real content before
+	 * it), move the break earlier and remove that too.
+	 * @param {element} rendered the page's rendered content
+	 * @param {element} source the source content
+	 * @param {object} bounds the page area
+	 * @param {BreakToken} breakToken the break token after the first removal
+	 * @returns {BreakToken} the (possibly earlier) break token
+	 */
+	settleOverflow(rendered, source, bounds, breakToken) {
+		for (let guard = 0; guard < 50; guard++) {
+			let overflow = this.findOverflow(rendered, bounds);
+			if (!overflow || !this.hasContentBefore(overflow, rendered)) {
+				break;
+			}
+			let earlier = this.createBreakToken(overflow, rendered, source);
+			if (!earlier || !earlier.node) {
+				break;
+			}
+			let letter = earlier.offset && earlier.node.textContent ? earlier.node.textContent.charAt(earlier.offset) : undefined;
+			let removed = this.removeOverflow(overflow, letter);
+			this.hooks && this.hooks.afterOverflowRemoved.trigger(removed, rendered, this);
+			breakToken = earlier;
 		}
 		return breakToken;
 	}

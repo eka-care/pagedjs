@@ -1,5 +1,6 @@
 // Eka regression suite: `npm test` (in eka/, after `npm run build` at the repo root).
-//   node run.mjs [--only <case-name>] [--sweep fine] [--ignore-header] [--verbose]
+//   node run.mjs [--only <case-name>] [--sweep fine] [--setup <size>:<top>,...] [--ignore-header] [--verbose]
+// --setup reruns exact page setups, e.g. --setup A4:2mm,A5:40mm,A4_landscape:0mm
 // --ignore-header skips the header check, to measure only lost/cut/misaligned content (e.g. when
 // comparing against stock Paged.js, which never repeats headers).
 // Exit code 1 if any case fails in any page setup.
@@ -15,7 +16,10 @@ const args = process.argv.slice(2);
 // Each top margin moves every page break, so a boundary bug can't hide. The default sweep is quick;
 // `--sweep fine` steps the margin by 2mm across four page sizes (84 setups per case).
 const fine = args.includes("--sweep") && args[args.indexOf("--sweep") + 1] === "fine";
-const SWEEP = fine
+const setupArg = args.includes("--setup") ? args[args.indexOf("--setup") + 1] : null;
+const SWEEP = setupArg
+	? setupArg.split(",").map((s) => { const [size, marginTop] = s.split(":"); return { size: size.replace(/_/g, " "), marginTop, marginSide: "15mm", marginBottom: "15mm" }; })
+	: fine
 	? ["A4", "A5", "letter", "A4 landscape"].flatMap((size) =>
 		Array.from({ length: 21 }, (_, i) => ({ size, marginTop: `${i * 2}mm`, marginSide: "15mm", marginBottom: "15mm" })))
 	: ["10mm", "16mm", "22mm", "28mm", "34mm", "40mm"].map((marginTop) => ({
