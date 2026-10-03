@@ -481,10 +481,10 @@ class Layout {
 		let overflow = this.findOverflow(rendered, bounds);
 		let breakToken, breakLetter;
 
-		// break-inside: avoid is a preference, not a rule (CSS Fragmentation 3, §4.4): when the
-		// element doesn't fit even on a page of its own, break inside it. Otherwise it is pushed to
-		// every following page, the chunker stops with "Layout repeated", and the rest of the
-		// document is silently dropped.
+		// When the page made no progress (nothing but the overflowing element on it), that element
+		// must break inside instead of moving on — otherwise it is pushed to every following page,
+		// the chunker stops with "Layout repeated", and the rest of the document is silently
+		// dropped. See relaxBreakAvoid for the two things that keep Chrome from breaking it.
 		while (overflow && !this.hasContentBefore(overflow, rendered) && this.relaxBreakAvoid(overflow, rendered)) {
 			overflow = this.findOverflow(rendered, bounds);
 		}
@@ -558,12 +558,18 @@ class Layout {
 	}
 
 	/**
-	 * Relax break-inside: avoid where the overflow starts — on that element, its first descendants
-	 * (a <tbody> is pushed out by its first row; a row by its cells) and its ancestors. Only this
-	 * page's rendered copy changes; the next page re-renders from source with avoid intact.
+	 * Make the element where the overflow starts breakable — that element, its first descendants
+	 * (a <tbody> is pushed out by its first row; a row by its cells) and its ancestors:
+	 * - break-inside: avoid is relaxed. It is a preference, not a rule (CSS Fragmentation 3,
+	 *   §4.4): when the element doesn't fit even on a page of its own, the UA breaks inside it.
+	 * - Table cells get box-decoration-break: clone. When a row's content fits but its cells'
+	 *   trailing padding/border overhang the page by a fraction of a pixel, Chrome moves the whole
+	 *   row to the next column instead of breaking between its lines; with clone it fragments.
+	 *   (Cloning also closes the cell's border at the page edge.)
+	 * Only this page's rendered copy changes; the next page re-renders from source.
 	 * @param {Range} overflow the overflow range found on this page
 	 * @param {element} rendered the page's rendered content
-	 * @returns {boolean} whether anything was relaxed (so the caller can stop looping)
+	 * @returns {boolean} whether anything changed (so the caller can stop looping)
 	 */
 	relaxBreakAvoid(overflow, rendered) {
 		let node = overflow.startContainer;
@@ -584,6 +590,12 @@ class Layout {
 		}
 		let relaxed = false;
 		for (let candidate of candidates) {
+			if ((candidate.nodeName === "TD" || candidate.nodeName === "TH") && !candidate.hasAttribute("data-break-decoration-cloned")) {
+				candidate.style.setProperty("box-decoration-break", "clone", "important");
+				candidate.style.setProperty("-webkit-box-decoration-break", "clone", "important");
+				candidate.setAttribute("data-break-decoration-cloned", "");
+				relaxed = true;
+			}
 			if (candidate.hasAttribute("data-break-inside-relaxed")) {
 				continue;
 			}
