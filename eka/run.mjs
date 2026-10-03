@@ -1,4 +1,5 @@
 // Eka regression suite: `npm test` (in eka/, after `npm run build` at the repo root).
+// Renders every committed page in pages/ and checks it against its expectations in cases.mjs.
 //   node run.mjs [--only <case-name>] [--sweep fine] [--setup <size>:<top>,...] [--ignore-header] [--verbose]
 // --setup reruns exact page setups, e.g. --setup A4:2mm,A5:40mm,A4_landscape:0mm
 // --ignore-header skips the header check, to measure only lost/cut/misaligned content (e.g. when
@@ -6,11 +7,9 @@
 // Exit code 1 if any case fails in any page setup.
 import fs from "fs";
 import { chromium } from "playwright";
-import tableCases from "./cases/index.mjs";
-import moreCases, { edgeCases } from "./cases/more.mjs";
-import { render, POLYFILL } from "./support/render.mjs";
+import cases from "./cases.mjs";
+import { render, POLYFILL, PAGES } from "./support/render.mjs";
 
-const cases = [...tableCases, ...moreCases, ...edgeCases];
 const args = process.argv.slice(2);
 
 // Each top margin moves every page break, so a boundary bug can't hide. The default sweep is quick;
@@ -31,6 +30,23 @@ const ignoreHeader = args.includes("--ignore-header");
 
 if (!fs.existsSync(POLYFILL)) {
 	console.error(`Missing ${POLYFILL} — run \`npm run build\` at the repo root first.`);
+	process.exit(2);
+}
+
+// Every committed page has expectations, and every expectation has a page.
+const pageNames = fs.readdirSync(PAGES).filter((f) => f.endsWith(".html")).map((f) => f.slice(0, -5));
+const caseNames = cases.map((c) => c.name);
+const unlisted = pageNames.filter((n) => !caseNames.includes(n));
+const missing = caseNames.filter((n) => !pageNames.includes(n));
+const twice = caseNames.filter((n, i) => caseNames.indexOf(n) !== i);
+if (unlisted.length || missing.length || twice.length) {
+	if (unlisted.length) console.error(`pages/ without an entry in cases.mjs: ${unlisted.join(", ")}`);
+	if (missing.length) console.error(`cases.mjs entries without a page in pages/: ${missing.join(", ")}`);
+	if (twice.length) console.error(`cases.mjs lists twice: ${twice.join(", ")}`);
+	process.exit(2);
+}
+if (only && !caseNames.includes(only)) {
+	console.error(`No case named ${only}`);
 	process.exit(2);
 }
 
@@ -68,10 +84,10 @@ const browser = await chromium.launch();
 let failed = 0;
 const selected = cases.filter((c) => !only || c.name === only);
 for (const c of selected) {
-	const setups = c.pages || SWEEP;
+	const setups = c.setups || SWEEP;
 	const results = [];
 	for (const page of setups) {
-		const r = await render(browser, { css: c.css, body: c.body, page });
+		const r = await render(browser, { name: c.name, page });
 		results.push({ page, f: failures(c, r), r });
 	}
 	const bad = results.filter((x) => x.f.length);

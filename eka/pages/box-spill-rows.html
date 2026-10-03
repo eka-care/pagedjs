@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>box-spill-rows</title>
+<meta name="description" content="Rows of fixed-height boxes: a row whose text fits but whose box spills past the page must move whole, not print cut off.">
+<!-- Page setup. The regression runner (eka/run.mjs) replaces this block for each page size and
+     margin it sweeps; edit the rules below, not this. -->
+<style data-eka-page-setup>@page { size: A4; margin: 16mm 15mm 15mm 15mm; }</style>
+<style>
+body { font: 12px/1.4 Arial, sans-serif; margin: 0; }
+table { border-collapse: collapse; width: 100%; }
+td, th { border: 1px solid #333; padding: 4px 6px; vertical-align: top; text-align: left; }
+</style>
+<!-- Opens as-is in a browser after `npm run build` at the repo root. The runner swaps in the
+     build under test (and any integration handlers) here. -->
+<script src="../../dist/paged.polyfill.js"></script>
+</head>
+<body>
+<table data-table="t1">
+<thead>
+<tr><th data-col="0">#</th><th data-col="1">Item</th><th data-col="2">Value</th></tr>
+</thead>
+<tbody>
+<tr data-row="0"><td data-col="0">1</td><td data-col="1"><div style="height:40px">Item 1</div></td><td data-col="2">x</td></tr>
+<tr data-row="1"><td data-col="0">2</td><td data-col="1"><div style="height:63px">Item 2</div></td><td data-col="2">x</td></tr>
+<tr data-row="2"><td data-col="0">3</td><td data-col="1"><div style="height:86px">Item 3</div></td><td data-col="2">x</td></tr>
+<tr data-row="3"><td data-col="0">4</td><td data-col="1"><div style="height:109px">Item 4</div></td><td data-col="2">x</td></tr>
+<tr data-row="4"><td data-col="0">5</td><td data-col="1"><div style="height:62px">Item 5</div></td><td data-col="2">x</td></tr>
+<tr data-row="5"><td data-col="0">6</td><td data-col="1"><div style="height:85px">Item 6</div></td><td data-col="2">x</td></tr>
+<tr data-row="6"><td data-col="0">7</td><td data-col="1"><div style="height:108px">Item 7</div></td><td data-col="2">x</td></tr>
+<tr data-row="7"><td data-col="0">8</td><td data-col="1"><div style="height:61px">Item 8</div></td><td data-col="2">x</td></tr>
+<tr data-row="8"><td data-col="0">9</td><td data-col="1"><div style="height:84px">Item 9</div></td><td data-col="2">x</td></tr>
+<tr data-row="9"><td data-col="0">10</td><td data-col="1"><div style="height:107px">Item 10</div></td><td data-col="2">x</td></tr>
+<tr data-row="10"><td data-col="0">11</td><td data-col="1"><div style="height:60px">Item 11</div></td><td data-col="2">x</td></tr>
+<tr data-row="11"><td data-col="0">12</td><td data-col="1"><div style="height:83px">Item 12</div></td><td data-col="2">x</td></tr>
+<tr data-row="12"><td data-col="0">13</td><td data-col="1"><div style="height:106px">Item 13</div></td><td data-col="2">x</td></tr>
+<tr data-row="13"><td data-col="0">14</td><td data-col="1"><div style="height:59px">Item 14</div></td><td data-col="2">x</td></tr>
+<tr data-row="14"><td data-col="0">15</td><td data-col="1"><div style="height:82px">Item 15</div></td><td data-col="2">x</td></tr>
+<tr data-row="15"><td data-col="0">16</td><td data-col="1"><div style="height:105px">Item 16</div></td><td data-col="2">x</td></tr>
+<tr data-row="16"><td data-col="0">17</td><td data-col="1"><div style="height:58px">Item 17</div></td><td data-col="2">x</td></tr>
+<tr data-row="17"><td data-col="0">18</td><td data-col="1"><div style="height:81px">Item 18</div></td><td data-col="2">x</td></tr>
+<tr data-row="18"><td data-col="0">19</td><td data-col="1"><div style="height:104px">Item 19</div></td><td data-col="2">x</td></tr>
+<tr data-row="19"><td data-col="0">20</td><td data-col="1"><div style="height:57px">Item 20</div></td><td data-col="2">x</td></tr>
+<tr data-row="20"><td data-col="0">21</td><td data-col="1"><div style="height:80px">Item 21</div></td><td data-col="2">x</td></tr>
+<tr data-row="21"><td data-col="0">22</td><td data-col="1"><div style="height:103px">Item 22</div></td><td data-col="2">x</td></tr>
+<tr data-row="22"><td data-col="0">23</td><td data-col="1"><div style="height:56px">Item 23</div></td><td data-col="2">x</td></tr>
+<tr data-row="23"><td data-col="0">24</td><td data-col="1"><div style="height:79px">Item 24</div></td><td data-col="2">x</td></tr>
+<tr data-row="24"><td data-col="0">25</td><td data-col="1"><div style="height:102px">Item 25</div></td><td data-col="2">x</td></tr>
+<tr data-row="25"><td data-col="0">26</td><td data-col="1"><div style="height:55px">Item 26</div></td><td data-col="2">x</td></tr>
+<tr data-row="26"><td data-col="0">27</td><td data-col="1"><div style="height:78px">Item 27</div></td><td data-col="2">x</td></tr>
+<tr data-row="27"><td data-col="0">28</td><td data-col="1"><div style="height:101px">Item 28</div></td><td data-col="2">x</td></tr>
+<tr data-row="28"><td data-col="0">29</td><td data-col="1"><div style="height:54px">Item 29</div></td><td data-col="2">x</td></tr>
+<tr data-row="29"><td data-col="0">30</td><td data-col="1"><div style="height:77px">Item 30</div></td><td data-col="2">x</td></tr>
+<tr data-row="30"><td data-col="0">31</td><td data-col="1"><div style="height:100px">Item 31</div></td><td data-col="2">x</td></tr>
+<tr data-row="31"><td data-col="0">32</td><td data-col="1"><div style="height:53px">Item 32</div></td><td data-col="2">x</td></tr>
+<tr data-row="32"><td data-col="0">33</td><td data-col="1"><div style="height:76px">Item 33</div></td><td data-col="2">x</td></tr>
+<tr data-row="33"><td data-col="0">34</td><td data-col="1"><div style="height:99px">Item 34</div></td><td data-col="2">x</td></tr>
+<tr data-row="34"><td data-col="0">35</td><td data-col="1"><div style="height:52px">Item 35</div></td><td data-col="2">x</td></tr>
+<tr data-row="35"><td data-col="0">36</td><td data-col="1"><div style="height:75px">Item 36</div></td><td data-col="2">x</td></tr>
+<tr data-row="36"><td data-col="0">37</td><td data-col="1"><div style="height:98px">Item 37</div></td><td data-col="2">x</td></tr>
+<tr data-row="37"><td data-col="0">38</td><td data-col="1"><div style="height:51px">Item 38</div></td><td data-col="2">x</td></tr>
+<tr data-row="38"><td data-col="0">39</td><td data-col="1"><div style="height:74px">Item 39</div></td><td data-col="2">x</td></tr>
+<tr data-row="39"><td data-col="0">40</td><td data-col="1"><div style="height:97px">Item 40</div></td><td data-col="2">x</td></tr>
+</tbody>
+</table>
+</body>
+</html>

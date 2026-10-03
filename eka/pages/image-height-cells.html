@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>image-height-cells</title>
+<meta name="description" content="Rows of uneven unbreakable heights (image stand-ins).">
+<!-- Page setup. The regression runner (eka/run.mjs) replaces this block for each page size and
+     margin it sweeps; edit the rules below, not this. -->
+<style data-eka-page-setup>@page { size: A4; margin: 16mm 15mm 15mm 15mm; }</style>
+<style>
+body { font: 12px/1.4 Arial, sans-serif; margin: 0; }
+table { border-collapse: collapse; width: 100%; }
+td, th { border: 1px solid #333; padding: 4px 6px; vertical-align: top; text-align: left; }
+tr { break-inside: avoid; }
+</style>
+<!-- Opens as-is in a browser after `npm run build` at the repo root. The runner swaps in the
+     build under test (and any integration handlers) here. -->
+<script src="../../dist/paged.polyfill.js"></script>
+</head>
+<body>
+<table data-table="t1">
+<thead>
+<tr><th data-col="0">#</th><th data-col="1">Scan</th><th data-col="2">Height</th></tr>
+</thead>
+<tbody>
+<tr data-row="0"><td data-col="0">1</td><td data-col="1"><div style="height:40px;background:#ddd">image 1 (40px)</div></td><td data-col="2">40</td></tr>
+<tr data-row="1"><td data-col="0">2</td><td data-col="1"><div style="height:77px;background:#ddd">image 2 (77px)</div></td><td data-col="2">77</td></tr>
+<tr data-row="2"><td data-col="0">3</td><td data-col="1"><div style="height:114px;background:#ddd">image 3 (114px)</div></td><td data-col="2">114</td></tr>
+<tr data-row="3"><td data-col="0">4</td><td data-col="1"><div style="height:41px;background:#ddd">image 4 (41px)</div></td><td data-col="2">41</td></tr>
+<tr data-row="4"><td data-col="0">5</td><td data-col="1"><div style="height:78px;background:#ddd">image 5 (78px)</div></td><td data-col="2">78</td></tr>
+<tr data-row="5"><td data-col="0">6</td><td data-col="1"><div style="height:115px;background:#ddd">image 6 (115px)</div></td><td data-col="2">115</td></tr>
+<tr data-row="6"><td data-col="0">7</td><td data-col="1"><div style="height:42px;background:#ddd">image 7 (42px)</div></td><td data-col="2">42</td></tr>
+<tr data-row="7"><td data-col="0">8</td><td data-col="1"><div style="height:79px;background:#ddd">image 8 (79px)</div></td><td data-col="2">79</td></tr>
+<tr data-row="8"><td data-col="0">9</td><td data-col="1"><div style="height:116px;background:#ddd">image 9 (116px)</div></td><td data-col="2">116</td></tr>
+<tr data-row="9"><td data-col="0">10</td><td data-col="1"><div style="height:43px;background:#ddd">image 10 (43px)</div></td><td data-col="2">43</td></tr>
+<tr data-row="10"><td data-col="0">11</td><td data-col="1"><div style="height:80px;background:#ddd">image 11 (80px)</div></td><td data-col="2">80</td></tr>
+<tr data-row="11"><td data-col="0">12</td><td data-col="1"><div style="height:117px;background:#ddd">image 12 (117px)</div></td><td data-col="2">117</td></tr>
+<tr data-row="12"><td data-col="0">13</td><td data-col="1"><div style="height:44px;background:#ddd">image 13 (44px)</div></td><td data-col="2">44</td></tr>
+<tr data-row="13"><td data-col="0">14</td><td data-col="1"><div style="height:81px;background:#ddd">image 14 (81px)</div></td><td data-col="2">81</td></tr>
+<tr data-row="14"><td data-col="0">15</td><td data-col="1"><div style="height:118px;background:#ddd">image 15 (118px)</div></td><td data-col="2">118</td></tr>
+<tr data-row="15"><td data-col="0">16</td><td data-col="1"><div style="height:45px;background:#ddd">image 16 (45px)</div></td><td data-col="2">45</td></tr>
+<tr data-row="16"><td data-col="0">17</td><td data-col="1"><div style="height:82px;background:#ddd">image 17 (82px)</div></td><td data-col="2">82</td></tr>
+<tr data-row="17"><td data-col="0">18</td><td data-col="1"><div style="height:119px;background:#ddd">image 18 (119px)</div></td><td data-col="2">119</td></tr>
+<tr data-row="18"><td data-col="0">19</td><td data-col="1"><div style="height:46px;background:#ddd">image 19 (46px)</div></td><td data-col="2">46</td></tr>
+<tr data-row="19"><td data-col="0">20</td><td data-col="1"><div style="height:83px;background:#ddd">image 20 (83px)</div></td><td data-col="2">83</td></tr>
+<tr data-row="20"><td data-col="0">21</td><td data-col="1"><div style="height:120px;background:#ddd">image 21 (120px)</div></td><td data-col="2">120</td></tr>
+<tr data-row="21"><td data-col="0">22</td><td data-col="1"><div style="height:47px;background:#ddd">image 22 (47px)</div></td><td data-col="2">47</td></tr>
+<tr data-row="22"><td data-col="0">23</td><td data-col="1"><div style="height:84px;background:#ddd">image 23 (84px)</div></td><td data-col="2">84</td></tr>
+<tr data-row="23"><td data-col="0">24</td><td data-col="1"><div style="height:121px;background:#ddd">image 24 (121px)</div></td><td data-col="2">121</td></tr>
+<tr data-row="24"><td data-col="0">25</td><td data-col="1"><div style="height:48px;background:#ddd">image 25 (48px)</div></td><td data-col="2">48</td></tr>
+<tr data-row="25"><td data-col="0">26</td><td data-col="1"><div style="height:85px;background:#ddd">image 26 (85px)</div></td><td data-col="2">85</td></tr>
+<tr data-row="26"><td data-col="0">27</td><td data-col="1"><div style="height:122px;background:#ddd">image 27 (122px)</div></td><td data-col="2">122</td></tr>
+<tr data-row="27"><td data-col="0">28</td><td data-col="1"><div style="height:49px;background:#ddd">image 28 (49px)</div></td><td data-col="2">49</td></tr>
+<tr data-row="28"><td data-col="0">29</td><td data-col="1"><div style="height:86px;background:#ddd">image 29 (86px)</div></td><td data-col="2">86</td></tr>
+<tr data-row="29"><td data-col="0">30</td><td data-col="1"><div style="height:123px;background:#ddd">image 30 (123px)</div></td><td data-col="2">123</td></tr>
+<tr data-row="30"><td data-col="0">31</td><td data-col="1"><div style="height:50px;background:#ddd">image 31 (50px)</div></td><td data-col="2">50</td></tr>
+<tr data-row="31"><td data-col="0">32</td><td data-col="1"><div style="height:87px;background:#ddd">image 32 (87px)</div></td><td data-col="2">87</td></tr>
+<tr data-row="32"><td data-col="0">33</td><td data-col="1"><div style="height:124px;background:#ddd">image 33 (124px)</div></td><td data-col="2">124</td></tr>
+<tr data-row="33"><td data-col="0">34</td><td data-col="1"><div style="height:51px;background:#ddd">image 34 (51px)</div></td><td data-col="2">51</td></tr>
+<tr data-row="34"><td data-col="0">35</td><td data-col="1"><div style="height:88px;background:#ddd">image 35 (88px)</div></td><td data-col="2">88</td></tr>
+<tr data-row="35"><td data-col="0">36</td><td data-col="1"><div style="height:125px;background:#ddd">image 36 (125px)</div></td><td data-col="2">125</td></tr>
+<tr data-row="36"><td data-col="0">37</td><td data-col="1"><div style="height:52px;background:#ddd">image 37 (52px)</div></td><td data-col="2">52</td></tr>
+<tr data-row="37"><td data-col="0">38</td><td data-col="1"><div style="height:89px;background:#ddd">image 38 (89px)</div></td><td data-col="2">89</td></tr>
+<tr data-row="38"><td data-col="0">39</td><td data-col="1"><div style="height:126px;background:#ddd">image 39 (126px)</div></td><td data-col="2">126</td></tr>
+<tr data-row="39"><td data-col="0">40</td><td data-col="1"><div style="height:53px;background:#ddd">image 40 (53px)</div></td><td data-col="2">53</td></tr>
+</tbody>
+</table>
+</body>
+</html>

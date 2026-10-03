@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>image-taller-than-page</title>
+<meta name="description" content="A table whose first row is one image taller than a page: it can't print whole anywhere (clipped, as in stock), and must not cost a page with a lone header.">
+<!-- Page setup. The regression runner (eka/run.mjs) replaces this block for each page size and
+     margin it sweeps; edit the rules below, not this. -->
+<style data-eka-page-setup>@page { size: A4; margin: 16mm 15mm 15mm 15mm; }</style>
+<style>
+body { font: 12px/1.4 Arial, sans-serif; margin: 0; }
+table { border-collapse: collapse; width: 100%; }
+td, th { border: 1px solid #333; padding: 4px 6px; vertical-align: top; text-align: left; }
+</style>
+<!-- Opens as-is in a browser after `npm run build` at the repo root. The runner swaps in the
+     build under test (and any integration handlers) here. -->
+<script src="../../dist/paged.polyfill.js"></script>
+</head>
+<body>
+<p>Before</p>
+<table data-table="t1">
+<thead>
+<tr><th data-col="0">#</th><th data-col="1">Item</th><th data-col="2">Value</th></tr>
+</thead>
+<tbody>
+<tr><td data-col="0">0</td><td data-col="1"><img alt="scan" style="display:block;height:2000px;width:120px" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='2000'%3E%3Crect width='120' height='2000' fill='%23ccc'/%3E%3C/svg%3E"></td><td data-col="2">x</td></tr>
+<tr data-row="0"><td data-col="0">1</td><td data-col="1">Item 1</td><td data-col="2">0</td></tr>
+<tr data-row="1"><td data-col="0">2</td><td data-col="1">Item 2</td><td data-col="2">3</td></tr>
+<tr data-row="2"><td data-col="0">3</td><td data-col="1">Item 3</td><td data-col="2">6</td></tr>
+<tr data-row="3"><td data-col="0">4</td><td data-col="1">Item 4</td><td data-col="2">9</td></tr>
+<tr data-row="4"><td data-col="0">5</td><td data-col="1">Item 5</td><td data-col="2">12</td></tr>
+</tbody>
+</table>
+<p>The end</p>
+</body>
+</html>

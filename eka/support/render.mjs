@@ -1,12 +1,12 @@
-// Render one document with the fork's built polyfill and measure what actually prints.
+// Render one committed page (pages/<name>.html) with the build under test and measure what actually
+// prints.
 //
 // "Prints" means: inside a page's .pagedjs_area. Paged.js lays pages out in CSS columns, so content
 // that doesn't fit can sit in a hidden overflow column — still in the DOM, never on paper. Counting
 // DOM nodes would miss exactly the bugs this suite exists for, so every check here is geometric.
 //
-// Fixture conventions (see cases/*.mjs):
-//   <table data-table="t1">, body rows <tr data-row="N">, cells/headers data-col="K",
-//   long content lines <div data-line="N">.
+// Page markers (see cases.mjs): <table data-table="t1">, body rows <tr data-row="N">, cells/headers
+// data-col="K", long content lines <div data-line="N">.
 import fs from "fs";
 import path from "path";
 import { fileURLToPath, pathToFileURL } from "url";
@@ -17,32 +17,34 @@ export const POLYFILL = process.env.PAGEDJS_POLYFILL
 	? path.resolve(process.env.PAGEDJS_POLYFILL)
 	: path.resolve(here, "../../dist/paged.polyfill.js");
 const TMP = path.resolve(here, "../.tmp");
+export const PAGES = path.resolve(here, "../pages");
 
 // EKA_HANDLERS=pagify-legacy,colgroup-after-layout loads integration handlers (support/integrations/)
 // next to the polyfill, to check the fork stays correct while integrations still ship them.
 const HANDLERS = (process.env.EKA_HANDLERS || "").split(",").filter(Boolean)
 	.map((name) => `<script src="${pathToFileURL(path.resolve(here, "integrations", name + ".js")).href}"></script>`).join("\n");
 
-export function documentHTML({ css, body, page }) {
-	return `<!doctype html>
-<html><head><meta charset="utf-8">
-<script>window.PagedConfig = { auto: false };</script>
-<script src="${pathToFileURL(POLYFILL).href}"></script>
-${HANDLERS}
-<style>
-@page { size: ${page.size}; margin: ${page.marginTop} ${page.marginSide} ${page.marginBottom} ${page.marginSide}; }
-body { font: 12px/1.4 Arial, sans-serif; margin: 0; }
-table { border-collapse: collapse; width: 100%; }
-td, th { border: 1px solid #333; padding: 4px 6px; vertical-align: top; text-align: left; }
-${css || ""}
-</style></head>
-<body>${body}</body></html>`;
+/**
+ * A committed page, set up for one run: its marked page-setup block becomes this run's page size and
+ * margins, and its polyfill <script> becomes the build under test (plus any integration handlers),
+ * with auto-run off so the runner starts and awaits pagination itself.
+ */
+export function documentHTML(source, page, polyfill = POLYFILL) {
+	const SETUP = /<style data-eka-page-setup>[\s\S]*?<\/style>/;
+	const SCRIPT = /<script src="\.\.\/\.\.\/dist\/paged\.polyfill\.js"><\/script>/;
+	if (!SETUP.test(source) || !SCRIPT.test(source)) {
+		throw new Error('a page needs a <style data-eka-page-setup> block and <script src="../../dist/paged.polyfill.js"> (see pages/long-table.html)');
+	}
+	const setup = `<style data-eka-page-setup>@page { size: ${page.size}; margin: ${page.marginTop} ${page.marginSide} ${page.marginBottom} ${page.marginSide}; }</style>`;
+	const build = `<script>window.PagedConfig = { auto: false };</script>\n<script src="${pathToFileURL(polyfill).href}"></script>\n${HANDLERS}`;
+	return source.replace(SETUP, () => setup).replace(SCRIPT, () => build);
 }
 
-export async function render(browser, doc, { timeoutMs = 25000 } = {}) {
+export async function render(browser, { name, page: setup, polyfill }, { timeoutMs = 25000 } = {}) {
 	fs.mkdirSync(TMP, { recursive: true });
-	const file = path.join(TMP, `doc-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.html`);
-	fs.writeFileSync(file, documentHTML(doc));
+	const source = fs.readFileSync(path.join(PAGES, name + ".html"), "utf8");
+	const file = path.join(TMP, `${name}-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.html`);
+	fs.writeFileSync(file, documentHTML(source, setup, polyfill));
 	const page = await browser.newPage({ viewport: { width: 1100, height: 1400 } });
 	const consoleErrors = [];
 	page.on("console", (m) => { if (m.type() === "error" || /Layout repeated/.test(m.text())) consoleErrors.push(m.text().slice(0, 200)); });
@@ -126,7 +128,9 @@ function measureInPage() {
 		});
 	});
 	const ids = {};
-	document.querySelectorAll(".pagedjs_pages [id]").forEach((el) => { ids[el.id] = (ids[el.id] || 0) + 1; });
+	// Page content only: Paged.js itself clones running elements (position: running()) into every
+	// page's margin boxes, ids and all.
+	document.querySelectorAll(".pagedjs_page_content [id]").forEach((el) => { ids[el.id] = (ids[el.id] || 0) + 1; });
 	const duplicateIds = Object.keys(ids).filter((k) => ids[k] > 1);
 	const unstableWidths = Object.entries(headerWidths)
 		.filter(([, ws]) => new Set(ws).size > 1)
