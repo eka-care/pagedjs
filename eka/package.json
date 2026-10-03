@@ -1,0 +1,12 @@
+{
+  "name": "pagedjs-eka-regressions",
+  "private": true,
+  "description": "Eka's table-pagination regression suite for this fork. Renders each case with ../dist/paged.polyfill.js and checks that nothing is lost, clipped or misaligned.",
+  "type": "module",
+  "scripts": {
+    "test": "node run.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.61.0"
+  }
+}
