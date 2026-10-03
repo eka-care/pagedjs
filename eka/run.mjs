@@ -58,6 +58,7 @@ function failures(c, r) {
 	if (r.rowspanOverruns.length) f.push(`${r.rowspanOverruns.length} rowspan cells overrun their page (e.g. ${r.rowspanOverruns[0]})`);
 	if (r.duplicateIds.length) f.push(`duplicate ids: ${r.duplicateIds.slice(0, 3).join(", ")}`);
 	if (e.thead && !ignoreHeader && r.missingThead.length) f.push(`no header on ${r.missingThead.length} page(s) (${r.missingThead.slice(0, 3).join(", ")})`);
+	if (e.maxPages && r.pages > e.maxPages) f.push(`${r.pages} pages, expected at most ${e.maxPages}`);
 	if (e.aligned && r.misalignedCells.length) f.push(`${r.misalignedCells.length} cells out of their column (e.g. ${r.misalignedCells[0]})`);
 	if (e.stableWidths && r.unstableWidths.length) f.push(`column widths change across pages (${r.unstableWidths[0]})`);
 	return f;

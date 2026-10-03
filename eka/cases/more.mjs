@@ -148,4 +148,11 @@ export const edgeCases = [
 		body: `<table data-table="t1"><caption>Weekly diet plan</caption>${head()}<tbody><tr data-row="0" style="break-inside:avoid"><td data-col="0">1</td><td data-col="1">${Array.from({ length: 120 }, (_, i) => `<div>Plan line ${i + 1}</div>`).join("")}</td><td data-col="2">x</td></tr>${rowsOf(30, 1)}</tbody></table>`,
 		expect: { rows: 31, thead: true },
 	},
+	{
+		name: "image-taller-than-page",
+		about: "A table whose first row is one image taller than a page: it can't print whole anywhere (clipped, as in stock), and must not cost a page with a lone header.",
+		body: `<p>Before</p><table data-table="t1">${head()}<tbody><tr><td data-col="0">0</td><td data-col="1"><img alt="scan" style="display:block;height:2000px;width:120px" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='2000'%3E%3Crect width='120' height='2000' fill='%23ccc'/%3E%3C/svg%3E"></td><td data-col="2">x</td></tr>${rowsOf(5)}</tbody></table><p>The end</p>`,
+		// Same as stock: Before + header | the image (clipped) | header + the 5 rows.
+		expect: { rows: 5, maxPages: 3, allowOrphanHeader: true },
+	},
 ];

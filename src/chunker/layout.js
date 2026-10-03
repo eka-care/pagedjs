@@ -515,9 +515,10 @@ class Layout {
 			}
 
 			if (breakToken && breakToken.node && extract) {
+				let stayPut = this.headersThatCantJoinFirstRow(rendered, bounds);
 				let removed = this.removeOverflow(overflow, breakLetter);
 				this.hooks && this.hooks.afterOverflowRemoved.trigger(removed, rendered, this);
-				breakToken = this.settleOverflow(rendered, source, bounds, breakToken, prevBreakToken);
+				breakToken = this.settleOverflow(rendered, source, bounds, breakToken, prevBreakToken, stayPut);
 			}
 
 		}
@@ -537,13 +538,14 @@ class Layout {
 	 * @param {object} bounds the page area
 	 * @param {BreakToken} breakToken the break token after the first removal
 	 * @param {BreakToken} prevBreakToken the token this page started from
+	 * @param {Set<element>} [stayPut] tables not to move for a lone header (headersThatCantJoinFirstRow)
 	 * @returns {BreakToken} the (possibly earlier) break token
 	 */
-	settleOverflow(rendered, source, bounds, breakToken, prevBreakToken) {
+	settleOverflow(rendered, source, bounds, breakToken, prevBreakToken, stayPut) {
 		for (let guard = 0; guard < 50; guard++) {
 			let overflow = this.resolveNoProgress(this.findOverflow(rendered, bounds), rendered, bounds) ||
 				this.progressOnly(this.findBoxOverflow(rendered, bounds), rendered) ||
-				this.progressOnly(this.findOrphanedHeader(rendered, source), rendered);
+				this.progressOnly(this.findOrphanedHeader(rendered, source, stayPut), rendered);
 			if (!overflow || !this.hasContentBefore(overflow, rendered)) {
 				break;
 			}
@@ -651,11 +653,12 @@ class Layout {
 	 * having moved on: move the whole table to the next page so the header goes with its rows.
 	 * @param {element} rendered the page's rendered content
 	 * @param {element} source the source content
+	 * @param {Set<element>} [stayPut] tables whose header can't share any page with their first row
 	 * @returns {Range|undefined} an overflow range starting at that table
 	 */
-	findOrphanedHeader(rendered, source) {
+	findOrphanedHeader(rendered, source, stayPut) {
 		for (let table of rendered.querySelectorAll("table")) {
-			if (table.hasAttribute("data-split-from") || table.closest("[data-repeated-header]")) {
+			if (table.hasAttribute("data-split-from") || table.closest("[data-repeated-header]") || (stayPut && stayPut.has(table))) {
 				continue;
 			}
 			let hasHeader = table.querySelector(":scope > thead, :scope > caption");
@@ -676,6 +679,38 @@ class Layout {
 			range.setEndAfter(rendered.lastChild);
 			return range;
 		}
+	}
+
+	/**
+	 * Tables whose header can't share any page with their first body row, because that row holds an
+	 * unbreakable item (an image, a chart) taller than a page minus the header. Moving such a table
+	 * on to keep its header company would only leave the header alone on the next page instead, a
+	 * page later; so findOrphanedHeader leaves it where it is, as stock Paged.js does. Measured
+	 * before the overflow is removed, while the row is still laid out (in the overflow column).
+	 * @param {element} rendered the page's rendered content
+	 * @param {object} bounds the page area
+	 * @returns {Set<element>} the rendered tables to leave in place
+	 */
+	headersThatCantJoinFirstRow(rendered, bounds) {
+		let tables = new Set();
+		for (let table of rendered.querySelectorAll("table")) {
+			let row = table.querySelector(":scope > tbody > tr");
+			if (!row) {
+				continue;
+			}
+			let header = 0;
+			table.querySelectorAll(":scope > thead, :scope > caption").forEach((el) => {
+				header += el.getBoundingClientRect().height;
+			});
+			let tallest = 0;
+			row.querySelectorAll("img, svg, video, canvas, iframe, object, embed").forEach((el) => {
+				tallest = Math.max(tallest, el.getBoundingClientRect().height);
+			});
+			if (header && header + tallest > bounds.height) {
+				tables.add(table);
+			}
+		}
+		return tables;
 	}
 
 	/**

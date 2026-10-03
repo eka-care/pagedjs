@@ -18,6 +18,10 @@ build on it.
 | Break a row whose cells' padding overhangs the page by a sub-pixel (`box-decoration-break: clone` on that page's copy) | Chrome moves the whole row to the hidden overflow column; same truncation. |
 | Re-check the page after removing its overflow (`settleOverflow`) | The new last row can stop fitting by a fraction of a pixel and silently drop out of print (the #351 class). |
 | Always make progress: cut by measurement as a last resort (`forceBreakInside`) | Remaining knife-edge geometries where Chrome still moves a row out whole. |
+| Move a row whose box spills past the page whole (`findBoxOverflow`) | A row whose text fits but whose fixed-height box or bottom border doesn't prints cut off: nothing *content* overflowed, so Paged.js didn't break. |
+| Don't leave a header alone at the end of a page (`findOrphanedHeader`) | A table starting near the bottom prints only its header there, its rows on the next page. |
+| Drop the repeated header on a page where header + row can't fit (`dropRepeatedHeaders`) | A header too tall to repeat with a row under it loops ("Layout repeated"); browsers drop the repeat in that case too. |
+| Close rowspan cells at the page edge (`clampRowspans`) | A rowspan cell spanning past the page's last row is drawn without its bottom border. |
 
 Every fix is in `src/chunker/layout.js` or `src/utils/dom.js`, with a commit explaining it.
 
@@ -41,6 +45,7 @@ node run.mjs --sweep fine                # 84 setups per case (A4/A5/Letter/A4 l
 node run.mjs --only diet-chart --verbose
 node run.mjs --setup A5:40mm,A4_landscape:0mm
 npm run test:with-integrations           # same cases with integrations' after-layout table handlers loaded
+node upstream-specs.mjs --stock /path/to/stock-0.4.3/paged.polyfill.js   # every upstream spec document: nothing stock shows may go missing
 PAGEDJS_POLYFILL=/path/to/other/paged.polyfill.js node run.mjs --ignore-header   # compare a build
 ```
 
@@ -59,11 +64,20 @@ bugs only appear at particular page geometries.
 ## Behaviour to know about
 
 - A `<thead>` (and any `<colgroup>`) **always** repeats on every page a table continues onto, as
-  browsers do when printing. To keep a heading row from repeating, put it in the `<tbody>`.
-- The repeated copy is marked `data-repeated-header` and has no `data-ref`. CSS counters incremented
-  inside the header count again on each page it repeats on.
+  browsers do when printing. To keep a heading row from repeating, put it in the `<tbody>`. Only the
+  **first** `<thead>` repeats (a later one renders as body rows, as in browsers). `<caption>` and
+  `<tfoot>` don't repeat.
+- The repeated copy is marked `data-repeated-header` and has no `data-ref`; ids in it become `data-id`
+  (no duplicate ids), and forced-break / named-page markers are dropped from it. CSS counters
+  incremented inside the header count again on each page it repeats on.
+- On a page where the repeated header plus the next row can't fit, that page's copy is hidden
+  (`data-repeated-header-dropped`), not removed.
+- A table's header or caption alone is not "progress" on a page: a row that doesn't fit under it is
+  made to fit (or the table moves to the next page) rather than leaving the header alone.
 - When a page would otherwise make no progress, `break-inside: avoid` is relaxed (and table cells get
   `box-decoration-break: clone`) on **that page's copy** of the element only.
+- Every break these fixes move goes through the `onOverflow` / `onBreakToken` hooks, as the first one
+  does, so handlers that move or veto breaks still apply.
 
 ## Integrations: no table handlers needed
 
@@ -81,3 +95,8 @@ insert and the `height: max-content` override they carry are what hid lost rows 
 - `createBreakToken` can map "before the table body" to "start of the table body", restarting the
   table on the next page. The fixes above stop pages reaching that state; the mapping itself is
   unchanged.
+- A fixed-height box that spills past the page **outside a table row** is still clipped, as in stock
+  (only table rows are moved whole).
+- An unbreakable item taller than a whole page (one image) is clipped at the page bottom, as in stock.
+  A table whose first row holds one is not moved off the previous page for its header's sake (that
+  would only leave the header alone a page later).
