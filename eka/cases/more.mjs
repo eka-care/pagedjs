@@ -135,4 +135,17 @@ export const edgeCases = [
 		body: `<div style="height:955px;background:#eee">Spacer leaving ~50px</div><table data-table="t1">${head()}<tbody>${Array.from({ length: 30 }, (_, i) => `<tr data-row="${i}"><td data-col="0">${i + 1}</td><td data-col="1"><div style="height:50px">Item ${i + 1}</div></td><td data-col="2">x</td></tr>`).join("")}</tbody></table>`,
 		expect: { rows: 30, thead: true },
 	},
+	{
+		name: "all-thead-rows",
+		about: "A table authored with every row inside <thead>: its earlier rows are real content, so it breaks like any table (nothing repeats, nothing is lost).",
+		body: `<table data-table="t1"><thead>${rowsOf(120)}</thead></table>`,
+		// Every page is header rows only, by authoring.
+		expect: { rows: 120, allowOrphanHeader: true },
+	},
+	{
+		name: "caption-tall-first-row",
+		about: "A captioned table at the top of a page whose first row (break-inside: avoid) is taller than a page: the caption alone is not progress, so the row breaks under it instead of leaving the caption alone.",
+		body: `<table data-table="t1"><caption>Weekly diet plan</caption>${head()}<tbody><tr data-row="0" style="break-inside:avoid"><td data-col="0">1</td><td data-col="1">${Array.from({ length: 120 }, (_, i) => `<div>Plan line ${i + 1}</div>`).join("")}</td><td data-col="2">x</td></tr>${rowsOf(30, 1)}</tbody></table>`,
+		expect: { rows: 31, thead: true },
+	},
 ];

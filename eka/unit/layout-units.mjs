@@ -90,6 +90,27 @@ const results = await page.evaluate(() => {
 	const cut2 = layout.forceBreakInside(overflow, wrapper, layout.bounds);
 	const cutNode = cut2 && cut2.startContainer.childNodes[cut2.startOffset];
 	check("forceBreakInside never cuts inside the header", !!cutNode && !cutNode.closest("thead") && cutNode.dataset.line !== undefined, cutNode ? `cut before line ${cutNode.dataset.line}` : "no cut");
+
+	// hasContentBefore: a table's own <thead>/<caption> alone is not progress, and neither is a
+	// source <colgroup> — but when the break is INSIDE the <thead> (a table authored as all-header
+	// rows), its earlier rows are.
+	wrapper.innerHTML = `<table><caption>Cap</caption><colgroup><col style="width:50%"><col></colgroup><thead><tr><th>H</th><th>H2</th></tr></thead><tbody><tr><td>row</td><td>z</td></tr></tbody></table>`;
+	overflow = document.createRange();
+	overflow.setStartBefore(wrapper.querySelector("tbody tr"));
+	overflow.setEndAfter(wrapper.lastChild);
+	check("hasContentBefore ignores a table's own caption, colgroup and thead", layout.hasContentBefore(overflow, wrapper) === false, "");
+	wrapper.innerHTML = `<table><thead><tr><th>A</th></tr><tr><th>B</th></tr><tr><th id="third">C</th></tr></thead></table>`;
+	overflow = document.createRange();
+	overflow.setStartBefore(wrapper.querySelector("#third").parentElement);
+	overflow.setEndAfter(wrapper.lastChild);
+	check("hasContentBefore counts earlier rows when the break is inside the thead", layout.hasContentBefore(overflow, wrapper) === true, "");
+
+	// relaxBreakAvoid never climbs out of the page.
+	wrapper.innerHTML = `<div style="break-inside:avoid">x</div>`;
+	overflow = document.createRange();
+	overflow.setStart(wrapper, wrapper.childNodes.length);
+	overflow.setEndAfter(wrapper.lastChild);
+	check("relaxBreakAvoid does nothing when the break is the page itself", layout.relaxBreakAvoid(overflow, wrapper) === false && !document.querySelector("[data-break-inside-relaxed]"), "");
 	return out;
 });
 await browser.close();

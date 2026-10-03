@@ -517,7 +517,7 @@ class Layout {
 			if (breakToken && breakToken.node && extract) {
 				let removed = this.removeOverflow(overflow, breakLetter);
 				this.hooks && this.hooks.afterOverflowRemoved.trigger(removed, rendered, this);
-				breakToken = this.settleOverflow(rendered, source, bounds, breakToken);
+				breakToken = this.settleOverflow(rendered, source, bounds, breakToken, prevBreakToken);
 			}
 
 		}
@@ -530,14 +530,16 @@ class Layout {
 	 * it into the hidden overflow column — in the DOM, never printed, and the break token already
 	 * points past it. So measure again, and while something still overflows — content, a table row's
 	 * box, or a table left showing only its header — move the break earlier and remove that too. The
-	 * page never ends up empty: see resolveNoProgress.
+	 * page never ends up empty: see resolveNoProgress. Each move goes through the same onOverflow /
+	 * onBreakToken hooks as the first one, so a handler that moves or vetoes breaks still applies.
 	 * @param {element} rendered the page's rendered content
 	 * @param {element} source the source content
 	 * @param {object} bounds the page area
 	 * @param {BreakToken} breakToken the break token after the first removal
+	 * @param {BreakToken} prevBreakToken the token this page started from
 	 * @returns {BreakToken} the (possibly earlier) break token
 	 */
-	settleOverflow(rendered, source, bounds, breakToken) {
+	settleOverflow(rendered, source, bounds, breakToken, prevBreakToken) {
 		for (let guard = 0; guard < 50; guard++) {
 			let overflow = this.resolveNoProgress(this.findOverflow(rendered, bounds), rendered, bounds) ||
 				this.progressOnly(this.findBoxOverflow(rendered, bounds), rendered) ||
@@ -545,8 +547,22 @@ class Layout {
 			if (!overflow || !this.hasContentBefore(overflow, rendered)) {
 				break;
 			}
+			this.hooks.onOverflow.triggerSync(overflow, rendered, bounds, this).forEach((newOverflow) => {
+				if (typeof newOverflow != "undefined") {
+					overflow = newOverflow;
+				}
+			});
+			if (!overflow) {
+				break;
+			}
 			let earlier = this.createBreakToken(overflow, rendered, source);
-			if (!earlier || !earlier.node || earlier.equals(breakToken)) {
+			this.hooks.onBreakToken.triggerSync(earlier, overflow, rendered, this).forEach((newToken) => {
+				if (typeof newToken != "undefined") {
+					earlier = newToken;
+				}
+			});
+			// Never back onto the token the page started from: the chunker would skip the item
+			if (!earlier || !earlier.node || earlier.equals(breakToken) || earlier.equals(prevBreakToken)) {
 				break;
 			}
 			let letter = earlier.offset && earlier.node.textContent ? earlier.node.textContent.charAt(earlier.offset) : undefined;
@@ -719,14 +735,22 @@ class Layout {
 	 * @returns {boolean} true if some content precedes the overflow
 	 */
 	hasContentBefore(overflow, rendered) {
-		// Reject (skip with their whole subtree) every table header — the repeated copies and the
-		// table's own <thead> — and the repeated <colgroup>: a header with no rows under it is not
-		// progress, so a row that doesn't fit under it is made to fit instead of leaving the header
-		// alone on the page.
+		// Skip, with their whole subtree, what is not progress on its own: the repeated header copies,
+		// column groups, and a table's own <thead> or <caption> — a header with no rows under it is
+		// not progress, so a row that doesn't fit under it is made to fit instead of leaving the
+		// header alone on the page. Unless the break is inside that <thead>/<caption>: then its
+		// earlier rows are content (a table authored as all-<thead> rows still breaks normally).
+		let breakNode = overflow.startContainer;
 		let walker = document.createTreeWalker(rendered, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
-			acceptNode: (n) => (isElement(n) && (n.nodeName === "THEAD" || n.hasAttribute("data-repeated-header")))
-				? NodeFilter.FILTER_REJECT
-				: NodeFilter.FILTER_ACCEPT
+			acceptNode: (n) => {
+				if (!isElement(n)) {
+					return NodeFilter.FILTER_ACCEPT;
+				}
+				let skip = n.hasAttribute("data-repeated-header") ||
+					n.nodeName === "COLGROUP" || n.nodeName === "COL" ||
+					((n.nodeName === "THEAD" || n.nodeName === "CAPTION") && !n.contains(breakNode));
+				return skip ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+			}
 		});
 		let node;
 		let isVisibleLeafBox = (el) => {
@@ -770,6 +794,9 @@ class Layout {
 			node = node.childNodes[overflow.startOffset];
 		}
 		let start = isElement(node) ? node : node.parentElement;
+		if (!start || start === rendered || !rendered.contains(start)) {
+			return false;
+		}
 		// Descend into the first flowing child: past a table's header, caption and column groups.
 		let firstFlowChild = (el) => Array.from(el.children).find((c) =>
 			!c.hasAttribute("data-repeated-header") && !["THEAD", "CAPTION", "COLGROUP", "COL"].includes(c.nodeName));
