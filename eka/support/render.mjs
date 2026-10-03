@@ -27,17 +27,20 @@ const HANDLERS = (process.env.EKA_HANDLERS || "").split(",").filter(Boolean)
 /**
  * A committed page, set up for one run: its marked page-setup block becomes this run's page size and
  * margins, and its polyfill <script> becomes the build under test (plus any integration handlers),
- * with auto-run off so the runner starts and awaits pagination itself.
+ * with auto-run off so the runner starts and awaits pagination itself. The run's copy is written to
+ * .tmp/, so a <base> keeps the page's relative URLs (images, fonts) resolving against pages/.
  */
 export function documentHTML(source, page, polyfill = POLYFILL) {
 	const SETUP = /<style data-eka-page-setup>[\s\S]*?<\/style>/;
 	const SCRIPT = /<script src="\.\.\/\.\.\/dist\/paged\.polyfill\.js"><\/script>/;
-	if (!SETUP.test(source) || !SCRIPT.test(source)) {
-		throw new Error('a page needs a <style data-eka-page-setup> block and <script src="../../dist/paged.polyfill.js"> (see pages/long-table.html)');
+	const HEAD = /<head(\s[^>]*)?>/i;
+	if (!SETUP.test(source) || !SCRIPT.test(source) || !HEAD.test(source)) {
+		throw new Error('a page needs a <head>, a <style data-eka-page-setup> block and <script src="../../dist/paged.polyfill.js"> (see pages/long-table.html)');
 	}
+	const base = `<base href="${pathToFileURL(PAGES).href}/">`;
 	const setup = `<style data-eka-page-setup>@page { size: ${page.size}; margin: ${page.marginTop} ${page.marginSide} ${page.marginBottom} ${page.marginSide}; }</style>`;
 	const build = `<script>window.PagedConfig = { auto: false };</script>\n<script src="${pathToFileURL(polyfill).href}"></script>\n${HANDLERS}`;
-	return source.replace(SETUP, () => setup).replace(SCRIPT, () => build);
+	return source.replace(HEAD, (head) => `${head}\n${base}`).replace(SETUP, () => setup).replace(SCRIPT, () => build);
 }
 
 export async function render(browser, { name, page: setup, polyfill }, { timeoutMs = 25000 } = {}) {

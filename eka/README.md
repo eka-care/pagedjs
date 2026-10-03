@@ -94,6 +94,7 @@ Chrome only produces at knife-edge geometries.
    existing page: it needs the `<style data-eka-page-setup>` block and the
    `<script src="../../dist/paged.polyfill.js">` line. Strip patient or customer data first: this repo
    is public.
+   Relative URLs resolve against `eka/pages/`: put images or fonts a page needs in `eka/pages/assets/`.
 2. Mark what the checks should read: `data-table="t1"` on the table, `data-row="0…N-1"` on body rows,
    `data-col` on header and body cells, `data-line` on lines of long content.
 3. Add its expectations to `eka/cases.mjs` and run it on the current build: it should **fail** for the
