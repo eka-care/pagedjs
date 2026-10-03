@@ -4,7 +4,8 @@
   "description": "Eka's table-pagination regression suite for this fork. Renders each case with ../dist/paged.polyfill.js and checks that nothing is lost, clipped or misaligned.",
   "type": "module",
   "scripts": {
-    "test": "node run.mjs && node unit/layout-units.mjs"
+    "test": "node run.mjs && node unit/layout-units.mjs",
+    "test:with-integrations": "EKA_HANDLERS=pagify-legacy,colgroup-after-layout node run.mjs"
   },
   "devDependencies": {
     "playwright": "1.61.0"

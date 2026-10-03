@@ -18,11 +18,17 @@ export const POLYFILL = process.env.PAGEDJS_POLYFILL
 	: path.resolve(here, "../../dist/paged.polyfill.js");
 const TMP = path.resolve(here, "../.tmp");
 
+// EKA_HANDLERS=pagify-legacy,colgroup-after-layout loads integration handlers (support/integrations/)
+// next to the polyfill, to check the fork stays correct while integrations still ship them.
+const HANDLERS = (process.env.EKA_HANDLERS || "").split(",").filter(Boolean)
+	.map((name) => `<script src="${pathToFileURL(path.resolve(here, "integrations", name + ".js")).href}"></script>`).join("\n");
+
 export function documentHTML({ css, body, page }) {
 	return `<!doctype html>
 <html><head><meta charset="utf-8">
 <script>window.PagedConfig = { auto: false };</script>
 <script src="${pathToFileURL(POLYFILL).href}"></script>
+${HANDLERS}
 <style>
 @page { size: ${page.size}; margin: ${page.marginTop} ${page.marginSide} ${page.marginBottom} ${page.marginSide}; }
 body { font: 12px/1.4 Arial, sans-serif; margin: 0; }

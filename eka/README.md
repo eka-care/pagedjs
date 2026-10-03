@@ -40,6 +40,7 @@ cd eka && npm install && npm test        # default sweep (6 page setups per case
 node run.mjs --sweep fine                # 84 setups per case (A4/A5/Letter/A4 landscape × 0–40mm)
 node run.mjs --only diet-chart --verbose
 node run.mjs --setup A5:40mm,A4_landscape:0mm
+npm run test:with-integrations           # same cases with integrations' after-layout table handlers loaded
 PAGEDJS_POLYFILL=/path/to/other/paged.polyfill.js node run.mjs --ignore-header   # compare a build
 ```
 
@@ -63,6 +64,14 @@ bugs only appear at particular page geometries.
   inside the header count again on each page it repeats on.
 - When a page would otherwise make no progress, `break-inside: avoid` is relaxed (and table cells get
   `box-decoration-break: clone`) on **that page's copy** of the element only.
+
+## Integrations: no table handlers needed
+
+With this fork, an integration needs **no** custom handler to repeat `<thead>` or `<colgroup>`, or to
+fix rowspan borders at page edges. Handlers that add a header or colgroup **after layout** (the
+pattern integrations ship today) are no-ops here, since the copy is already present, and the
+suite passes with them loaded (`npm run test:with-integrations`). Still remove them: the after-layout
+insert and the `height: max-content` override they carry are what hid lost rows in the first place.
 
 ## Known, not yet fixed
 

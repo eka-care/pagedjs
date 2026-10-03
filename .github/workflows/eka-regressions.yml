@@ -49,3 +49,9 @@ jobs:
           else
             npm test
           fi
+
+      # Integrations still ship after-layout header/colgroup handlers until they drop them: the fork
+      # must stay correct with those loaded.
+      - name: Run the suite with integration handlers loaded
+        working-directory: eka
+        run: npm run test:with-integrations

@@ -652,11 +652,14 @@ class Layout {
 	}
 
 	/**
-	 * Remove the repeated <thead>/<colgroup> copies from the table(s) where the overflow starts, on
-	 * this page only — the last resort when header plus content can't fit on a page.
+	 * Hide the repeated <thead> copy of the table(s) where the overflow starts, on this page only —
+	 * the last resort when header plus content can't fit on a page. Hidden, not removed: an
+	 * integration's after-layout handler that adds a <thead> to any split table lacking one would
+	 * otherwise put it back after the page was measured and push content out of print.
+	 * (The <colgroup> copy stays: it has no height, and it keeps the column widths.)
 	 * @param {Range} overflow the overflow range found on this page
 	 * @param {element} rendered the page's rendered content
-	 * @returns {boolean} whether any copy was removed
+	 * @returns {boolean} whether any copy was hidden
 	 */
 	dropRepeatedHeaders(overflow, rendered) {
 		let node = overflow.startContainer;
@@ -668,13 +671,13 @@ class Layout {
 			if (el.nodeName !== "TABLE") {
 				continue;
 			}
-			el.querySelectorAll(":scope > [data-repeated-header]").forEach((copy) => {
-				copy.remove();
-				dropped = true;
+			el.querySelectorAll(":scope > thead[data-repeated-header]").forEach((copy) => {
+				if (copy.style.getPropertyValue("display") !== "none") {
+					copy.style.setProperty("display", "none", "important");
+					copy.setAttribute("data-repeated-header-dropped", "");
+					dropped = true;
+				}
 			});
-			if (dropped) {
-				el.setAttribute("data-repeated-header-dropped", "");
-			}
 		}
 		return dropped;
 	}
