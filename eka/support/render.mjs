@@ -12,7 +12,10 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-export const POLYFILL = path.resolve(here, "../../dist/paged.polyfill.js");
+// PAGEDJS_POLYFILL=<path> runs the suite against another build (e.g. stock 0.4.3) for comparison.
+export const POLYFILL = process.env.PAGEDJS_POLYFILL
+	? path.resolve(process.env.PAGEDJS_POLYFILL)
+	: path.resolve(here, "../../dist/paged.polyfill.js");
 const TMP = path.resolve(here, "../.tmp");
 
 export function documentHTML({ css, body, page }) {

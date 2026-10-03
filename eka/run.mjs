@@ -1,19 +1,29 @@
 // Eka regression suite: `npm test` (in eka/, after `npm run build` at the repo root).
-//   node run.mjs [--only <case-name>] [--verbose]
+//   node run.mjs [--only <case-name>] [--sweep fine] [--ignore-header] [--verbose]
+// --ignore-header skips the header check, to measure only lost/cut/misaligned content (e.g. when
+// comparing against stock Paged.js, which never repeats headers).
 // Exit code 1 if any case fails in any page setup.
 import fs from "fs";
 import { chromium } from "playwright";
-import cases from "./cases/index.mjs";
+import tableCases from "./cases/index.mjs";
+import moreCases from "./cases/more.mjs";
 import { render, POLYFILL } from "./support/render.mjs";
 
-// Default sweep: each top margin moves every page break, so a boundary bug can't hide.
-const SWEEP = ["10mm", "16mm", "22mm", "28mm", "34mm", "40mm"].map((marginTop) => ({
-	size: "A4", marginTop, marginSide: "15mm", marginBottom: "15mm",
-}));
-
+const cases = [...tableCases, ...moreCases];
 const args = process.argv.slice(2);
+
+// Each top margin moves every page break, so a boundary bug can't hide. The default sweep is quick;
+// `--sweep fine` steps the margin by 2mm across four page sizes (84 setups per case).
+const fine = args.includes("--sweep") && args[args.indexOf("--sweep") + 1] === "fine";
+const SWEEP = fine
+	? ["A4", "A5", "letter", "A4 landscape"].flatMap((size) =>
+		Array.from({ length: 21 }, (_, i) => ({ size, marginTop: `${i * 2}mm`, marginSide: "15mm", marginBottom: "15mm" })))
+	: ["10mm", "16mm", "22mm", "28mm", "34mm", "40mm"].map((marginTop) => ({
+		size: "A4", marginTop, marginSide: "15mm", marginBottom: "15mm",
+	}));
 const only = args.includes("--only") ? args[args.indexOf("--only") + 1] : null;
 const verbose = args.includes("--verbose");
+const ignoreHeader = args.includes("--ignore-header");
 
 if (!fs.existsSync(POLYFILL)) {
 	console.error(`Missing ${POLYFILL} — run \`npm run build\` at the repo root first.`);
@@ -37,7 +47,7 @@ function failures(c, r) {
 		const missing = e.lines - new Set(r.linesVisible).size;
 		if (missing) f.push(`${missing}/${e.lines} lines of the tall row not printed`);
 	}
-	if (e.thead && r.missingThead.length) f.push(`no header on ${r.missingThead.length} page(s) (${r.missingThead.slice(0, 3).join(", ")})`);
+	if (e.thead && !ignoreHeader && r.missingThead.length) f.push(`no header on ${r.missingThead.length} page(s) (${r.missingThead.slice(0, 3).join(", ")})`);
 	if (e.aligned && r.misalignedCells.length) f.push(`${r.misalignedCells.length} cells out of their column (e.g. ${r.misalignedCells[0]})`);
 	if (e.stableWidths && r.unstableWidths.length) f.push(`column widths change across pages (${r.unstableWidths[0]})`);
 	return f;
@@ -56,7 +66,7 @@ for (const c of selected) {
 	const bad = results.filter((x) => x.f.length);
 	if (bad.length) failed++;
 	console.log(`${bad.length ? "FAIL" : "pass"}  ${c.name.padEnd(28)} ${setups.length - bad.length}/${setups.length} setups`);
-	(verbose ? bad : bad.slice(0, 2)).forEach((x) => console.log(`        top ${x.page.marginTop} (${x.r.pages || "?"} pages): ${x.f.join("; ")}`));
+	(verbose ? bad : bad.slice(0, 2)).forEach((x) => console.log(`        ${x.page.size} top ${x.page.marginTop} (${x.r.pages || "?"} pages): ${x.f.join("; ")}`));
 }
 await browser.close();
 console.log(`\n${selected.length - failed}/${selected.length} cases pass`);
