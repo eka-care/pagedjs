@@ -485,8 +485,13 @@ class Layout {
 		// must break inside instead of moving on — otherwise it is pushed to every following page,
 		// the chunker stops with "Layout repeated", and the rest of the document is silently
 		// dropped. See relaxBreakAvoid for the two things that keep Chrome from breaking it.
-		while (overflow && !this.hasContentBefore(overflow, rendered) && this.relaxBreakAvoid(overflow, rendered)) {
-			overflow = this.findOverflow(rendered, bounds);
+		while (overflow && !this.hasContentBefore(overflow, rendered)) {
+			if (this.relaxBreakAvoid(overflow, rendered)) {
+				overflow = this.findOverflow(rendered, bounds);
+				continue;
+			}
+			overflow = this.forceBreakInside(overflow, rendered, bounds) || overflow;
+			break;
 		}
 
 		let overflowHooks = this.hooks.onOverflow.triggerSync(overflow, rendered, bounds, this);
@@ -531,8 +536,9 @@ class Layout {
 	 * Removing the overflow can change the layout of what stays on the page: e.g. the new last table
 	 * row takes the table's bottom border and no longer fits by a fraction of a pixel, so Chrome moves
 	 * it into the hidden overflow column — in the DOM, never printed, and the break token already
-	 * points past it. So measure again, and while content still overflows (with real content before
-	 * it), move the break earlier and remove that too.
+	 * points past it. So measure again, and while content still overflows, move the break earlier
+	 * and remove that too. If everything left was pushed out whole, make it breakable first
+	 * (relaxBreakAvoid), so the page never ends up empty.
 	 * @param {element} rendered the page's rendered content
 	 * @param {element} source the source content
 	 * @param {object} bounds the page area
@@ -542,8 +548,20 @@ class Layout {
 	settleOverflow(rendered, source, bounds, breakToken) {
 		for (let guard = 0; guard < 50; guard++) {
 			let overflow = this.findOverflow(rendered, bounds);
-			if (!overflow || !this.hasContentBefore(overflow, rendered)) {
+			if (!overflow) {
 				break;
+			}
+			if (!this.hasContentBefore(overflow, rendered)) {
+				// Everything left was pushed out whole — e.g. a split row whose cells' trailing
+				// padding now overhangs the page. Make it breakable and measure again; failing
+				// that, cut it by measurement.
+				if (this.relaxBreakAvoid(overflow, rendered)) {
+					continue;
+				}
+				overflow = this.forceBreakInside(overflow, rendered, bounds);
+				if (!overflow) {
+					break;
+				}
 			}
 			let earlier = this.createBreakToken(overflow, rendered, source);
 			if (!earlier || !earlier.node) {
@@ -642,6 +660,67 @@ class Layout {
 			}
 		}
 		return relaxed;
+	}
+
+	/**
+	 * Last resort when the page made no progress and nothing could be relaxed: Chrome moved the
+	 * element out whole although part of it would fit (seen with table rows at sub-pixel page
+	 * edges). Find, by measuring, the longest leading run of its block-level pieces that stays on
+	 * the page, and break right after it. Text is never cut mid-line.
+	 * @param {Range} overflow the overflow range found on this page
+	 * @param {element} rendered the page's rendered content
+	 * @param {object} bounds the page area
+	 * @returns {Range|undefined} an overflow range starting at the first piece that doesn't fit,
+	 * or undefined when the element has fewer than two pieces or not even one fits
+	 */
+	forceBreakInside(overflow, rendered, bounds) {
+		let node = overflow.startContainer;
+		if (isElement(node) && overflow.startOffset < node.childNodes.length) {
+			node = node.childNodes[overflow.startOffset];
+		}
+		let start = isElement(node) ? node : node.parentElement;
+		if (!start || start === rendered) {
+			return;
+		}
+		const BLOCK = ["block", "list-item", "flex", "grid", "table", "flow-root"];
+		let isBlock = (el) => BLOCK.includes(window.getComputedStyle(el).display);
+		// Leaf block-level pieces, in document order: the places the element can be cut.
+		let pieces = Array.from(start.querySelectorAll("*")).filter((el) =>
+			!el.closest("[data-repeated-header]") && isBlock(el) && !Array.from(el.children).some(isBlock));
+		if (pieces.length < 2) {
+			return;
+		}
+		let saved = pieces.map((el) => [el.style.getPropertyValue("display"), el.style.getPropertyPriority("display")]);
+		let hideFrom = (k) => pieces.forEach((el, i) => {
+			if (i >= k) {
+				el.style.setProperty("display", "none", "important");
+			} else {
+				el.style.setProperty("display", saved[i][0], saved[i][1]);
+			}
+		});
+		let fits = () => {
+			let rect = start.getBoundingClientRect();
+			return rect.left < bounds.right && Math.floor(rect.bottom) <= Math.round(bounds.bottom);
+		};
+		let lo = 1, hi = pieces.length - 1, best = 0;
+		while (lo <= hi) {
+			let mid = (lo + hi) >> 1;
+			hideFrom(mid);
+			if (fits()) {
+				best = mid;
+				lo = mid + 1;
+			} else {
+				hi = mid - 1;
+			}
+		}
+		pieces.forEach((el, i) => el.style.setProperty("display", saved[i][0], saved[i][1]));
+		if (!best) {
+			return;
+		}
+		let range = document.createRange();
+		range.setStartBefore(pieces[best]);
+		range.setEndAfter(rendered.lastChild);
+		return range;
 	}
 
 	hasOverflow(element, bounds = this.bounds) {
