@@ -2,21 +2,27 @@
 // pages, counters, margin boxes, columns, tables, …) with stock 0.4.3 and with this build, and
 // compare what is VISIBLE inside the page areas. This build must never show fewer words than stock,
 // and must not add page errors or "Layout repeated".
-//   node upstream-specs.mjs --stock <path/to/stock/paged.polyfill.js> [--only <substring>]
-// (after `npm run build` at the repo root)
+//   node upstream-specs.mjs [--only <substring>] [--verbose] [--stock <path/to/paged.polyfill.js>]
+// (after `npm run build` at the repo root). Stock 0.4.3 is downloaded and hash-checked
+// (support/stock.mjs) unless --stock names another baseline.
 import fs from "fs";
 import http from "http";
 import path from "path";
 import { fileURLToPath } from "url";
 import { chromium } from "playwright";
+import { ensureStock } from "./support/stock.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
 const args = process.argv.slice(2);
-const stockPath = args.includes("--stock") ? path.resolve(args[args.indexOf("--stock") + 1]) : null;
+const stockPath = args.includes("--stock") ? path.resolve(args[args.indexOf("--stock") + 1]) : await ensureStock();
 const only = args.includes("--only") ? args[args.indexOf("--only") + 1] : null;
-if (!stockPath || !fs.existsSync(stockPath)) {
-	console.error("Pass --stock <path to stock 0.4.3 paged.polyfill.js>");
+if (!fs.existsSync(stockPath)) {
+	console.error(`No baseline at ${stockPath}`);
+	process.exit(2);
+}
+if (!fs.existsSync(path.join(root, "dist/paged.polyfill.js"))) {
+	console.error("Missing dist/paged.polyfill.js — run `npm run build` at the repo root first.");
 	process.exit(2);
 }
 

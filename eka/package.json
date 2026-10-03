@@ -1,11 +1,19 @@
 {
   "name": "pagedjs-eka-regressions",
   "private": true,
-  "description": "Eka's table-pagination regression suite for this fork. Renders each case with ../dist/paged.polyfill.js and checks that nothing is lost, clipped or misaligned.",
+  "description": "Eka's regression suite for this fork. Renders every committed page in pages/ with ../dist/paged.polyfill.js and checks that nothing is lost, clipped, duplicated or misaligned; compares every upstream spec document against stock 0.4.3.",
   "type": "module",
   "scripts": {
     "test": "node run.mjs && node unit/layout-units.mjs",
-    "test:with-integrations": "EKA_HANDLERS=pagify-legacy,colgroup-after-layout node run.mjs"
+    "test:with-integrations": "EKA_HANDLERS=pagify-legacy,colgroup-after-layout node run.mjs",
+    "test:fine": "node run.mjs --sweep fine",
+    "test:fine:with-integrations": "EKA_HANDLERS=pagify-legacy,colgroup-after-layout node run.mjs --sweep fine",
+    "test:upstream": "node upstream-specs.mjs",
+    "test:all": "npm test && npm run test:with-integrations && npm run test:fine && npm run test:fine:with-integrations && npm run test:upstream",
+    "ci:suite": "npm test && npm run test:with-integrations",
+    "ci:fine": "npm run test:fine && npm run test:fine:with-integrations",
+    "ci:upstream": "npm run test:upstream",
+    "perf": "node perf.mjs"
   },
   "devDependencies": {
     "playwright": "1.61.0"
