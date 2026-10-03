@@ -55,6 +55,15 @@ Chrome only produces at knife-edge geometries.
 When you fix something, add the case that reproduced it first, and run the fine sweep: most of these
 bugs only appear at particular page geometries.
 
+## Behaviour to know about
+
+- A `<thead>` (and any `<colgroup>`) **always** repeats on every page a table continues onto, as
+  browsers do when printing. To keep a heading row from repeating, put it in the `<tbody>`.
+- The repeated copy is marked `data-repeated-header` and has no `data-ref`. CSS counters incremented
+  inside the header count again on each page it repeats on.
+- When a page would otherwise make no progress, `break-inside: avoid` is relaxed (and table cells get
+  `box-decoration-break: clone`) on **that page's copy** of the element only.
+
 ## Known, not yet fixed
 
 - `rebuildAncestors` mutates the **source** row when carrying a rowspan cell onto a new page (it

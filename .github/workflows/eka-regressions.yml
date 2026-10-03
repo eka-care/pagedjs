@@ -41,8 +41,10 @@ jobs:
 
       - name: Run the suite
         working-directory: eka
+        env:
+          SWEEP: ${{ github.event.inputs.sweep }}
         run: |
-          if [ "${{ github.event.inputs.sweep }}" = "fine" ]; then
+          if [ "$SWEEP" = "fine" ]; then
             node run.mjs --sweep fine
           else
             npm test
