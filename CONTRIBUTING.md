@@ -1,3 +1,15 @@
+# Contributing to Eka's fork
+
+This is Eka's fork of Paged.js 0.4.3 (branch `eka/main`). Before changing anything, read
+[`AGENTS.md`](AGENTS.md): every change needs a committed page that reproduces it
+(`eka/pages/` + `eka/cases.mjs`) and must pass all four regression gates
+(`cd eka && npm run test:all`) so that we don't reintroduce lost rows. Report bugs at
+https://github.com/eka-care/pagedjs/issues.
+
+The upstream guide follows, for changes meant for Paged.js itself.
+
+---
+
 # Paged.js Contributions Guide
 
 Whether you're contributing to Pagedjs through development, creating examples, finding bug or just asking questions - thanks in advance for your help!
