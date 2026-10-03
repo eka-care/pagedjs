@@ -133,6 +133,27 @@ export function stackChildren(currentNode, stacked) {
 	return stack;
 }
 
+/**
+ * Copy a source table's <colgroup>s and <thead> into its continuation on a new page.
+ * The copies drop data-ref: they are decoration, not flow content, so they must never be
+ * mistaken for (or collide with) the real header when Paged.js looks nodes up by ref.
+ * @param {element} sourceTable the table in the source content
+ * @param {element} tableClone its continuation being built for the new page
+ * @returns {void}
+ */
+function repeatTableHeader(sourceTable, tableClone) {
+	for (let child of Array.from(sourceTable.children)) {
+		if (child.nodeName !== "COLGROUP" && child.nodeName !== "THEAD") {
+			continue;
+		}
+		let copy = child.cloneNode(true);
+		copy.removeAttribute("data-ref");
+		copy.querySelectorAll("[data-ref]").forEach((el) => el.removeAttribute("data-ref"));
+		copy.setAttribute("data-repeated-header", "");
+		tableClone.appendChild(copy);
+	}
+}
+
 export function rebuildAncestors(node) {
 	let parent, ancestor;
 	let ancestors = [];
@@ -211,6 +232,16 @@ export function rebuildAncestors(node) {
 			fragment.appendChild(parent);
 		}
 		added.push(parent);
+
+		// A table continuing on a new page repeats its <colgroup>s and <thead>, as browsers do when
+		// printing. Done while the continuation is built, so the header is part of what the page
+		// measures (adding it after layout pushes the page's last row into the hidden overflow).
+		if (parent.nodeName === "TABLE") {
+			let next = ancestors[i + 1] || node;
+			if (["TBODY", "TFOOT", "TR"].includes(next.nodeName)) {
+				repeatTableHeader(ancestor, parent);
+			}
+		}
 
 		// rebuild table rows
 		if (parent.nodeName === "TD" && ancestor.parentElement.contains(ancestor)) {
