@@ -44,6 +44,7 @@ function failures(c, r) {
 		const lost = [];
 		for (let i = 0; i < e.rows; i++) if (!visible.has(String(i))) lost.push(i);
 		if (lost.length) f.push(`${lost.length}/${e.rows} rows not printed (e.g. ${lost.slice(0, 5).join(",")})`);
+		if (r.rowsDuplicated.length) f.push(`${r.rowsDuplicated.length} rows printed twice (e.g. ${r.rowsDuplicated.slice(0, 5).join(",")})`);
 		const cut = r.rowsClipped.filter((id) => visible.has(id));
 		if (cut.length) f.push(`${cut.length} rows partly cut off (e.g. ${cut.slice(0, 5).join(",")})`);
 	}

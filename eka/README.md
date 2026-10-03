@@ -36,7 +36,7 @@ embeds, so any behavior change comes from our commits.
 
 ```bash
 npm run build
-cd eka && npm install && npm test        # default sweep: 6 page setups per case
+cd eka && npm install && npm test        # default sweep (6 page setups per case) + unit checks
 node run.mjs --sweep fine                # 84 setups per case (A4/A5/Letter/A4 landscape × 0–40mm)
 node run.mjs --only diet-chart --verbose
 node run.mjs --setup A5:40mm,A4_landscape:0mm
@@ -44,10 +44,13 @@ PAGEDJS_POLYFILL=/path/to/other/paged.polyfill.js node run.mjs --ignore-header  
 ```
 
 Each case (`cases/*.mjs`) is rendered in Chromium and checked by **geometry, not DOM presence**:
-every row and line must be visible inside a page area, the header must repeat, columns must stay
-aligned and keep their widths. Paged.js lays pages out in CSS columns, so a row can be in the DOM yet
-sit in a hidden overflow column and never print. A test that only counts DOM nodes misses exactly these
-bugs.
+every row and line must be visible inside a page area and printed once, the header must repeat,
+columns must stay aligned and keep their widths. Paged.js lays pages out in CSS columns, so a row can
+be in the DOM yet sit in a hidden overflow column and never print. A test that only counts DOM nodes
+misses exactly these bugs.
+
+`unit/layout-units.mjs` checks the layout helpers directly on a real Paged.js page, for situations
+Chrome only produces at knife-edge geometries.
 
 When you fix something, add the case that reproduced it first, and run the fine sweep: most of these
 bugs only appear at particular page geometries.

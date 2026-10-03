@@ -9,7 +9,7 @@
 //   long content lines <div data-line="N">.
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
+import { fileURLToPath, pathToFileURL } from "url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 // PAGEDJS_POLYFILL=<path> runs the suite against another build (e.g. stock 0.4.3) for comparison.
@@ -22,7 +22,7 @@ export function documentHTML({ css, body, page }) {
 	return `<!doctype html>
 <html><head><meta charset="utf-8">
 <script>window.PagedConfig = { auto: false };</script>
-<script src="file://${POLYFILL}"></script>
+<script src="${pathToFileURL(POLYFILL).href}"></script>
 <style>
 @page { size: ${page.size}; margin: ${page.marginTop} ${page.marginSide} ${page.marginBottom} ${page.marginSide}; }
 body { font: 12px/1.4 Arial, sans-serif; margin: 0; }
@@ -42,7 +42,7 @@ export async function render(browser, doc, { timeoutMs = 25000 } = {}) {
 	page.on("console", (m) => { if (m.type() === "error" || /Layout repeated/.test(m.text())) consoleErrors.push(m.text().slice(0, 200)); });
 	page.on("pageerror", (e) => consoleErrors.push(String(e).slice(0, 200)));
 	try {
-		await page.goto("file://" + file);
+		await page.goto(pathToFileURL(file).href);
 		const outcome = await page.evaluate(async (ms) => {
 			const timeout = new Promise((r) => setTimeout(() => r("TIMEOUT"), ms));
 			const flow = await Promise.race([window.PagedPolyfill.preview(), timeout]);
@@ -61,6 +61,7 @@ function measureInPage() {
 	const near = (a, b) => Math.abs(a - b) <= 2;
 	const inside = (r, a) => r.height > 0 && r.top >= a.top - 1 && r.bottom <= a.bottom + 1 && r.left >= a.left - 1 && r.right <= a.right + 1;
 	const rowsVisible = new Set();
+	const rowStarts = {}; // row id -> times it starts a fragment (a continued, split row doesn't count)
 	const rowsClipped = new Set();
 	const linesVisible = new Set();
 	const missingThead = [];
@@ -75,6 +76,7 @@ function measureInPage() {
 			const r = tr.getBoundingClientRect();
 			if (r.height <= 0) return;
 			(inside(r, area) ? rowsVisible : rowsClipped).add(tr.getAttribute("data-row"));
+			if (!tr.hasAttribute("data-split-from")) rowStarts[tr.getAttribute("data-row")] = (rowStarts[tr.getAttribute("data-row")] || 0) + 1;
 		});
 		pg.querySelectorAll(".pagedjs_page_content [data-line]").forEach((el) => {
 			if (inside(el.getBoundingClientRect(), area)) linesVisible.add(el.getAttribute("data-line"));
@@ -105,6 +107,7 @@ function measureInPage() {
 	return {
 		rowsVisible: Array.from(rowsVisible),
 		rowsClipped: Array.from(rowsClipped),
+		rowsDuplicated: Object.keys(rowStarts).filter((id) => rowStarts[id] > 1),
 		linesVisible: Array.from(linesVisible),
 		missingThead,
 		misalignedCells,
