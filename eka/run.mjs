@@ -7,10 +7,10 @@
 import fs from "fs";
 import { chromium } from "playwright";
 import tableCases from "./cases/index.mjs";
-import moreCases from "./cases/more.mjs";
+import moreCases, { edgeCases } from "./cases/more.mjs";
 import { render, POLYFILL } from "./support/render.mjs";
 
-const cases = [...tableCases, ...moreCases];
+const cases = [...tableCases, ...moreCases, ...edgeCases];
 const args = process.argv.slice(2);
 
 // Each top margin moves every page break, so a boundary bug can't hide. The default sweep is quick;
@@ -52,6 +52,11 @@ function failures(c, r) {
 		const missing = e.lines - new Set(r.linesVisible).size;
 		if (missing) f.push(`${missing}/${e.lines} lines of the tall row not printed`);
 	}
+	// Structural checks, on every case.
+	if (r.extraHeaders.length) f.push(`more than one repeated header on ${r.extraHeaders.length} page(s) (${r.extraHeaders[0]})`);
+	if (r.orphanHeaders.length && !e.allowOrphanHeader) f.push(`header left alone at a page end (${r.orphanHeaders[0]})`);
+	if (r.rowspanOverruns.length) f.push(`${r.rowspanOverruns.length} rowspan cells overrun their page (e.g. ${r.rowspanOverruns[0]})`);
+	if (r.duplicateIds.length) f.push(`duplicate ids: ${r.duplicateIds.slice(0, 3).join(", ")}`);
 	if (e.thead && !ignoreHeader && r.missingThead.length) f.push(`no header on ${r.missingThead.length} page(s) (${r.missingThead.slice(0, 3).join(", ")})`);
 	if (e.aligned && r.misalignedCells.length) f.push(`${r.misalignedCells.length} cells out of their column (e.g. ${r.misalignedCells[0]})`);
 	if (e.stableWidths && r.unstableWidths.length) f.push(`column widths change across pages (${r.unstableWidths[0]})`);

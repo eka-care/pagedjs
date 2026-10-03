@@ -101,6 +101,27 @@ function measureInPage() {
 			});
 		});
 	});
+	// Structural checks on every table fragment.
+	const extraHeaders = [];   // more than one repeated <thead> copy on a continued page
+	const orphanHeaders = [];  // a table fragment showing its header but no body row
+	const rowspanOverruns = []; // a cell spanning more rows than its page holds (its bottom edge is lost)
+	pages.forEach((pg, p) => {
+		pg.querySelectorAll(".pagedjs_page_content table").forEach((t) => {
+			const id = t.getAttribute("data-table") || "table";
+			if (t.querySelectorAll(":scope > thead[data-repeated-header]").length > 1) extraHeaders.push(`${id}@p${p + 1}`);
+			const rows = Array.from(t.querySelectorAll(":scope > tbody > tr, :scope > tfoot > tr")).filter((tr) => tr.getBoundingClientRect().height > 0);
+			if (t.querySelector(":scope > thead") && !rows.length) orphanHeaders.push(`${id}@p${p + 1}`);
+			t.querySelectorAll(":scope > tbody").forEach((tb) => {
+				const trs = Array.from(tb.rows);
+				trs.forEach((tr, r) => Array.from(tr.cells).forEach((cell) => {
+					if (cell.rowSpan > trs.length - r) rowspanOverruns.push(`${id}@p${p + 1} row ${tr.getAttribute("data-row")}`);
+				}));
+			});
+		});
+	});
+	const ids = {};
+	document.querySelectorAll(".pagedjs_pages [id]").forEach((el) => { ids[el.id] = (ids[el.id] || 0) + 1; });
+	const duplicateIds = Object.keys(ids).filter((k) => ids[k] > 1);
 	const unstableWidths = Object.entries(headerWidths)
 		.filter(([, ws]) => new Set(ws).size > 1)
 		.map(([id, ws]) => `${id}: ${ws.join("  ")}`);
@@ -108,6 +129,10 @@ function measureInPage() {
 		rowsVisible: Array.from(rowsVisible),
 		rowsClipped: Array.from(rowsClipped),
 		rowsDuplicated: Object.keys(rowStarts).filter((id) => rowStarts[id] > 1),
+		extraHeaders,
+		orphanHeaders,
+		rowspanOverruns,
+		duplicateIds,
 		linesVisible: Array.from(linesVisible),
 		missingThead,
 		misalignedCells,
