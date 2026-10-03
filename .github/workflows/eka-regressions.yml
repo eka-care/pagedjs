@@ -1,0 +1,49 @@
+# Eka fork: build the polyfill and run the table-pagination regression suite (eka/).
+name: eka regressions
+
+on:
+  push:
+    branches: ["eka/**"]
+  pull_request:
+    branches: ["eka/**", "upstream-v0.4.3"]
+  workflow_dispatch:
+    inputs:
+      sweep:
+        description: "Page-setup sweep (default = 6 setups per case, fine = 84)"
+        required: false
+        default: "default"
+        type: choice
+        options: ["default", "fine"]
+
+jobs:
+  regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      # The 0.4.3 build config uses JSON import assertions, which Node 22 rejects.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Build the polyfill
+        run: |
+          npm ci --ignore-scripts
+          npm run build
+
+      - name: Install the suite and Chromium
+        working-directory: eka
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Run the suite
+        working-directory: eka
+        run: |
+          if [ "${{ github.event.inputs.sweep }}" = "fine" ]; then
+            node run.mjs --sweep fine
+          else
+            npm test
+          fi
