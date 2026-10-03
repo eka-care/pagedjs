@@ -62,6 +62,14 @@ const results = await page.evaluate(() => {
 	overflow.setStartBefore(wrapper.querySelector("tbody"));
 	overflow.setEndAfter(wrapper.lastChild);
 	check("hasContentBefore ignores a repeated colgroup + thead", layout.hasContentBefore(overflow, wrapper) === false, "");
+
+	// hasContentBefore: an empty box with a height (spacer, signature box, coloured band) is content —
+	// the page made progress, so a kept-whole block after it should move on, not be split here.
+	wrapper.innerHTML = `<div style="height:120px;background:#eee"></div><table>${head}<tbody><tr><td>${lines(3)}</td><td>z</td></tr></tbody></table>`;
+	overflow = document.createRange();
+	overflow.setStartBefore(wrapper.querySelector("table"));
+	overflow.setEndAfter(wrapper.lastChild);
+	check("hasContentBefore counts an empty box with a height", layout.hasContentBefore(overflow, wrapper) === true, "");
 	return out;
 });
 await browser.close();

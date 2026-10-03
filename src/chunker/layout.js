@@ -589,10 +589,19 @@ class Layout {
 			acceptNode: (n) => (isElement(n) && n.hasAttribute("data-repeated-header")) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
 		});
 		let node;
+		let isVisibleLeafBox = (el) => {
+			// An empty box with a size (a spacer, a signature box) is content too — but not an
+			// element that contains the break itself.
+			if (el.firstElementChild || el.contains(overflow.startContainer)) {
+				return false;
+			}
+			let rect = el.getBoundingClientRect();
+			return rect.width > 0 && rect.height > 0;
+		};
 		while ((node = walker.nextNode())) {
 			let isContent = isText(node)
 				? node.textContent.trim().length > 0
-				: ["IMG", "SVG", "VIDEO", "CANVAS", "IFRAME", "OBJECT", "EMBED", "HR", "INPUT"].includes(node.nodeName.toUpperCase());
+				: ["IMG", "SVG", "VIDEO", "CANVAS", "IFRAME", "OBJECT", "EMBED", "HR", "INPUT"].includes(node.nodeName.toUpperCase()) || isVisibleLeafBox(node);
 			if (isContent) {
 				// The first content decides: before the break means the page made progress
 				return overflow.comparePoint(node, 0) < 0;
