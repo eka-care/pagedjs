@@ -481,6 +481,14 @@ class Layout {
 		let overflow = this.findOverflow(rendered, bounds);
 		let breakToken, breakLetter;
 
+		// break-inside: avoid is a preference, not a rule (CSS Fragmentation 3, §4.4): when the
+		// element doesn't fit even on a page of its own, break inside it. Otherwise it is pushed to
+		// every following page, the chunker stops with "Layout repeated", and the rest of the
+		// document is silently dropped.
+		while (overflow && !this.hasContentBefore(overflow, rendered) && this.relaxBreakAvoid(overflow, rendered)) {
+			overflow = this.findOverflow(rendered, bounds);
+		}
+
 		let overflowHooks = this.hooks.onOverflow.triggerSync(overflow, rendered, bounds, this);
 		overflowHooks.forEach((newOverflow) => {
 			if (typeof newOverflow != "undefined") {
@@ -516,6 +524,81 @@ class Layout {
 
 		}
 		return breakToken;
+	}
+
+	/**
+	 * Does the page hold any real content before the overflow? A repeated table header and empty
+	 * ancestor shells don't count: breaking there would make no progress.
+	 * @param {Range} overflow the overflow range found on this page
+	 * @param {element} rendered the page's rendered content
+	 * @returns {boolean} true if some content precedes the overflow
+	 */
+	hasContentBefore(overflow, rendered) {
+		let walker = document.createTreeWalker(rendered, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
+		let node;
+		while ((node = walker.nextNode())) {
+			if (isElement(node) && node.hasAttribute("data-repeated-header")) {
+				// Skip the repeated <thead>/<colgroup> and everything inside it
+				let next = nodeAfter(node, rendered);
+				if (!next) {
+					return false;
+				}
+				walker.currentNode = next;
+				node = next;
+			}
+			let isContent = isText(node)
+				? node.textContent.trim().length > 0
+				: ["IMG", "SVG", "VIDEO", "CANVAS", "IFRAME", "OBJECT", "EMBED", "HR", "INPUT"].includes(node.nodeName.toUpperCase());
+			if (isContent) {
+				// The first content decides: before the break means the page made progress
+				return overflow.comparePoint(node, 0) < 0;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Relax break-inside: avoid where the overflow starts — on that element, its first descendants
+	 * (a <tbody> is pushed out by its first row; a row by its cells) and its ancestors. Only this
+	 * page's rendered copy changes; the next page re-renders from source with avoid intact.
+	 * @param {Range} overflow the overflow range found on this page
+	 * @param {element} rendered the page's rendered content
+	 * @returns {boolean} whether anything was relaxed (so the caller can stop looping)
+	 */
+	relaxBreakAvoid(overflow, rendered) {
+		let node = overflow.startContainer;
+		if (isElement(node) && overflow.startOffset < node.childNodes.length) {
+			node = node.childNodes[overflow.startOffset];
+		}
+		let start = isElement(node) ? node : node.parentElement;
+		let firstFlowChild = (el) => Array.from(el.children).find((c) => !c.hasAttribute("data-repeated-header"));
+		let candidates = new Set();
+		for (let el = start; el; el = firstFlowChild(el)) {
+			candidates.add(el);
+			if (el.nodeName === "TR") {
+				Array.from(el.cells).forEach((cell) => candidates.add(cell));
+			}
+		}
+		for (let el = start && start.parentElement; el && el !== rendered; el = el.parentElement) {
+			candidates.add(el);
+		}
+		let relaxed = false;
+		for (let candidate of candidates) {
+			if (candidate.hasAttribute("data-break-inside-relaxed")) {
+				continue;
+			}
+			let value = window.getComputedStyle(candidate).breakInside;
+			let avoid = ["avoid", "avoid-page", "avoid-column"].includes(value) || candidate.dataset.breakInside === "avoid";
+			if (avoid) {
+				candidate.style.setProperty("break-inside", "auto", "important");
+				candidate.setAttribute("data-break-inside-relaxed", "");
+				if (candidate.dataset.breakInside === "avoid") {
+					candidate.dataset.breakInside = "auto";
+				}
+				relaxed = true;
+			}
+		}
+		return relaxed;
 	}
 
 	hasOverflow(element, bounds = this.bounds) {
