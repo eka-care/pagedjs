@@ -1,4 +1,5 @@
-# Eka fork: build the polyfill and run the table-pagination regression suite (eka/).
+# Eka fork: build the polyfill and run every regression gate (eka/) on every push and pull request.
+# A change merges only when all three pass; see AGENTS.md.
 name: eka regressions
 
 on:
@@ -7,18 +8,19 @@ on:
   pull_request:
     branches: ["eka/**", "upstream-v0.4.3"]
   workflow_dispatch:
-    inputs:
-      sweep:
-        description: "Page-setup sweep (default = 6 setups per case, fine = 84)"
-        required: false
-        default: "default"
-        type: choice
-        options: ["default", "fine"]
 
 jobs:
   regressions:
+    name: ${{ matrix.gate.name }}
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        gate:
+          - { id: suite, name: "Suite: every page (6 setups) + unit checks, with and without integration handlers" }
+          - { id: fine, name: "Fine sweep: every page × 84 setups, with and without integration handlers" }
+          - { id: upstream, name: "Upstream specs: every specs/** document vs stock 0.4.3" }
     steps:
       - uses: actions/checkout@v4
 
@@ -39,19 +41,6 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium
 
-      - name: Run the suite
+      - name: Run
         working-directory: eka
-        env:
-          SWEEP: ${{ github.event.inputs.sweep }}
-        run: |
-          if [ "$SWEEP" = "fine" ]; then
-            node run.mjs --sweep fine
-          else
-            npm test
-          fi
-
-      # Integrations still ship after-layout header/colgroup handlers until they drop them: the fork
-      # must stay correct with those loaded.
-      - name: Run the suite with integration handlers loaded
-        working-directory: eka
-        run: npm run test:with-integrations
+        run: npm run ci:${{ matrix.gate.id }}
