@@ -134,21 +134,33 @@ export function stackChildren(currentNode, stacked) {
 }
 
 /**
- * Copy a source table's <colgroup>s and <thead> into its continuation on a new page.
- * The copies drop data-ref: they are decoration, not flow content, so they must never be
- * mistaken for (or collide with) the real header when Paged.js looks nodes up by ref.
+ * Copy a source table's <colgroup>s and (first) <thead> into its continuation on a new page.
+ * Only the first <thead> is the table's header group; a later one renders as ordinary rows.
+ * The copies are decoration, not flow content: they drop data-ref (never confused with the real
+ * header when Paged.js looks nodes up by ref), move id to data-id like every other split copy (no
+ * duplicate ids; styling targets data-id), and drop forced-break / named-page markers (a header
+ * must not break every continued page).
  * @param {element} sourceTable the table in the source content
  * @param {element} tableClone its continuation being built for the new page
  * @returns {void}
  */
 function repeatTableHeader(sourceTable, tableClone) {
+	let headerSeen = false;
 	for (let child of Array.from(sourceTable.children)) {
-		if (child.nodeName !== "COLGROUP" && child.nodeName !== "THEAD") {
+		let isHeader = child.nodeName === "THEAD" && !headerSeen;
+		if (child.nodeName !== "COLGROUP" && !isHeader) {
 			continue;
 		}
+		headerSeen = headerSeen || isHeader;
 		let copy = child.cloneNode(true);
-		copy.removeAttribute("data-ref");
-		copy.querySelectorAll("[data-ref]").forEach((el) => el.removeAttribute("data-ref"));
+		[copy, ...copy.querySelectorAll("*")].forEach((el) => {
+			el.removeAttribute("data-ref");
+			if (el.hasAttribute("id")) {
+				el.setAttribute("data-id", el.getAttribute("id"));
+				el.removeAttribute("id");
+			}
+			["data-break-before", "data-break-after", "data-previous-break-after", "data-page"].forEach((name) => el.removeAttribute(name));
+		});
 		copy.setAttribute("data-repeated-header", "");
 		tableClone.appendChild(copy);
 	}

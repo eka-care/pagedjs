@@ -107,12 +107,14 @@ class Layout {
 
 				if (newBreakToken && newBreakToken.equals(prevBreakToken)) {
 					console.warn("Unable to layout item: ", prevNode);
+					this.clampRowspans(wrapper);
 					this.hooks && this.hooks.beforeRenderResult.trigger(undefined, wrapper, this);
 					return new RenderResult(undefined, new OverflowContentError("Unable to layout item", [prevNode]));
 				}
 
 				this.rebuildTableFromBreakToken(newBreakToken, wrapper);
 
+				this.clampRowspans(wrapper);
 				this.hooks && this.hooks.beforeRenderResult.trigger(newBreakToken, wrapper, this);
 				return new RenderResult(newBreakToken);
 			}
@@ -219,6 +221,7 @@ class Layout {
 					if (after) {
 						newBreakToken = new BreakToken(after);
 					} else {
+						this.clampRowspans(wrapper);
 						this.hooks && this.hooks.beforeRenderResult.trigger(undefined, wrapper, this);
 						return new RenderResult(undefined, new OverflowContentError("Unable to layout item", [node]));
 					}
@@ -227,6 +230,7 @@ class Layout {
 
 		}
 
+		this.clampRowspans(wrapper);
 		this.hooks && this.hooks.beforeRenderResult.trigger(newBreakToken, wrapper, this);
 		return new RenderResult(newBreakToken);
 	}
@@ -478,21 +482,10 @@ class Layout {
 	}
 
 	findBreakToken(rendered, source, bounds = this.bounds, prevBreakToken, extract = true) {
-		let overflow = this.findOverflow(rendered, bounds);
+		let overflow = this.findOverflow(rendered, bounds) || this.findBoxOverflow(rendered, bounds);
 		let breakToken, breakLetter;
 
-		// When the page made no progress (nothing but the overflowing element on it), that element
-		// must break inside instead of moving on — otherwise it is pushed to every following page,
-		// the chunker stops with "Layout repeated", and the rest of the document is silently
-		// dropped. See relaxBreakAvoid for the two things that keep Chrome from breaking it.
-		while (overflow && !this.hasContentBefore(overflow, rendered)) {
-			if (this.relaxBreakAvoid(overflow, rendered)) {
-				overflow = this.findOverflow(rendered, bounds);
-				continue;
-			}
-			overflow = this.forceBreakInside(overflow, rendered, bounds) || overflow;
-			break;
-		}
+		overflow = this.resolveNoProgress(overflow, rendered, bounds);
 
 		let overflowHooks = this.hooks.onOverflow.triggerSync(overflow, rendered, bounds, this);
 		overflowHooks.forEach((newOverflow) => {
@@ -536,9 +529,9 @@ class Layout {
 	 * Removing the overflow can change the layout of what stays on the page: e.g. the new last table
 	 * row takes the table's bottom border and no longer fits by a fraction of a pixel, so Chrome moves
 	 * it into the hidden overflow column — in the DOM, never printed, and the break token already
-	 * points past it. So measure again, and while content still overflows, move the break earlier
-	 * and remove that too. If everything left was pushed out whole, make it breakable first
-	 * (relaxBreakAvoid), so the page never ends up empty.
+	 * points past it. So measure again, and while something still overflows — content, a table row's
+	 * box, or a table left showing only its header — move the break earlier and remove that too. The
+	 * page never ends up empty: see resolveNoProgress.
 	 * @param {element} rendered the page's rendered content
 	 * @param {element} source the source content
 	 * @param {object} bounds the page area
@@ -547,21 +540,12 @@ class Layout {
 	 */
 	settleOverflow(rendered, source, bounds, breakToken) {
 		for (let guard = 0; guard < 50; guard++) {
-			let overflow = this.findOverflow(rendered, bounds);
-			if (!overflow) {
+			let overflow = this.findOverflow(rendered, bounds) ||
+				this.findBoxOverflow(rendered, bounds) ||
+				this.findOrphanedHeader(rendered, source);
+			overflow = this.resolveNoProgress(overflow, rendered, bounds);
+			if (!overflow || !this.hasContentBefore(overflow, rendered)) {
 				break;
-			}
-			if (!this.hasContentBefore(overflow, rendered)) {
-				// Everything left was pushed out whole — e.g. a split row whose cells' trailing
-				// padding now overhangs the page. Make it breakable and measure again; failing
-				// that, cut it by measurement.
-				if (this.relaxBreakAvoid(overflow, rendered)) {
-					continue;
-				}
-				overflow = this.forceBreakInside(overflow, rendered, bounds);
-				if (!overflow) {
-					break;
-				}
 			}
 			let earlier = this.createBreakToken(overflow, rendered, source);
 			if (!earlier || !earlier.node || earlier.equals(breakToken)) {
@@ -576,17 +560,159 @@ class Layout {
 	}
 
 	/**
-	 * Does the page hold any real content before the overflow? A repeated table header and empty
-	 * ancestor shells don't count: breaking there would make no progress.
+	 * When the overflow leaves the page with no progress (nothing but the overflowing element on it),
+	 * that element must break here instead of moving on — otherwise it is pushed to every following
+	 * page, the chunker stops with "Layout repeated", and the rest of the document is silently
+	 * dropped. In order: make it breakable (relaxBreakAvoid), cut it by measurement
+	 * (forceBreakInside), and finally drop this page's repeated table header, as browsers do with a
+	 * header too tall to repeat.
+	 * @param {Range} overflow the overflow found on this page (or undefined)
+	 * @param {element} rendered the page's rendered content
+	 * @param {object} bounds the page area
+	 * @returns {Range|undefined} the overflow to break at; one that still makes no progress if
+	 * nothing helped, or undefined if the content now fits
+	 */
+	resolveNoProgress(overflow, rendered, bounds) {
+		for (let guard = 0; overflow && guard < 20 && !this.hasContentBefore(overflow, rendered); guard++) {
+			if (this.relaxBreakAvoid(overflow, rendered)) {
+				overflow = this.findOverflow(rendered, bounds);
+				continue;
+			}
+			let forced = this.forceBreakInside(overflow, rendered, bounds);
+			if (forced) {
+				return forced;
+			}
+			if (this.dropRepeatedHeaders(overflow, rendered)) {
+				overflow = this.findOverflow(rendered, bounds);
+				continue;
+			}
+			break;
+		}
+		return overflow;
+	}
+
+	/**
+	 * A table row whose content fits but whose box doesn't: Chrome split it across the page edge and
+	 * only empty space, padding or its bottom border spilled into the hidden column, so findOverflow
+	 * (which looks for content) sees nothing and the row prints cut off. Treat the row as overflow so
+	 * it moves to the next page whole. Rows of a header are left to the header logic.
+	 * @param {element} rendered the page's rendered content
+	 * @param {object} bounds the page area
+	 * @returns {Range|undefined} an overflow range starting at that row
+	 */
+	findBoxOverflow(rendered, bounds) {
+		if (!this.hasOverflow(rendered, bounds)) {
+			return;
+		}
+		for (let row of rendered.querySelectorAll("tr")) {
+			if (row.closest("thead, [data-repeated-header]")) {
+				continue;
+			}
+			let spills = Array.from(row.getClientRects()).some((rect) =>
+				rect.height > 0 && (rect.left >= bounds.right || rect.bottom > bounds.bottom + 1));
+			if (spills) {
+				let range = document.createRange();
+				range.setStartBefore(row);
+				range.setEndAfter(rendered.lastChild);
+				return range;
+			}
+		}
+	}
+
+	/**
+	 * A table that starts on this page but shows only its header (or caption) here, all its rows
+	 * having moved on: move the whole table to the next page so the header goes with its rows.
+	 * @param {element} rendered the page's rendered content
+	 * @param {element} source the source content
+	 * @returns {Range|undefined} an overflow range starting at that table
+	 */
+	findOrphanedHeader(rendered, source) {
+		for (let table of rendered.querySelectorAll("table")) {
+			if (table.hasAttribute("data-split-from") || table.closest("[data-repeated-header]")) {
+				continue;
+			}
+			let hasHeader = table.querySelector(":scope > thead, :scope > caption");
+			let hasRows = table.querySelector(":scope > tbody > tr, :scope > tfoot > tr");
+			let sourceTable = table.dataset.ref && source.querySelector("[data-ref='" + table.dataset.ref + "']");
+			let continues = sourceTable && sourceTable.querySelector(":scope > tbody > tr");
+			if (!hasHeader || hasRows || !continues) {
+				continue;
+			}
+			let after = document.createRange();
+			after.setStartAfter(table);
+			after.setEndAfter(rendered.lastChild);
+			if (after.toString().trim().length) {
+				continue;
+			}
+			let range = document.createRange();
+			range.setStartBefore(table);
+			range.setEndAfter(rendered.lastChild);
+			return range;
+		}
+	}
+
+	/**
+	 * Remove the repeated <thead>/<colgroup> copies from the table(s) where the overflow starts, on
+	 * this page only — the last resort when header plus content can't fit on a page.
+	 * @param {Range} overflow the overflow range found on this page
+	 * @param {element} rendered the page's rendered content
+	 * @returns {boolean} whether any copy was removed
+	 */
+	dropRepeatedHeaders(overflow, rendered) {
+		let node = overflow.startContainer;
+		if (isElement(node) && overflow.startOffset < node.childNodes.length) {
+			node = node.childNodes[overflow.startOffset];
+		}
+		let dropped = false;
+		for (let el = isElement(node) ? node : node.parentElement; el && el !== rendered; el = el.parentElement) {
+			if (el.nodeName !== "TABLE") {
+				continue;
+			}
+			el.querySelectorAll(":scope > [data-repeated-header]").forEach((copy) => {
+				copy.remove();
+				dropped = true;
+			});
+			if (dropped) {
+				el.setAttribute("data-repeated-header-dropped", "");
+			}
+		}
+		return dropped;
+	}
+
+	/**
+	 * A rowspan cell that spans past the rows on its page (the rest moved to the next page) is drawn
+	 * without its bottom edge. Once the page is final, clamp each span to the rows actually here.
+	 * Only the rendered page changes; the next page carries the cell from source as before.
+	 * @param {element} rendered the page's rendered content
+	 * @returns {void}
+	 */
+	clampRowspans(rendered) {
+		rendered.querySelectorAll("thead, tbody, tfoot").forEach((group) => {
+			let rows = Array.from(group.rows);
+			rows.forEach((row, r) => Array.from(row.cells).forEach((cell) => {
+				if (cell.rowSpan > rows.length - r) {
+					cell.rowSpan = rows.length - r;
+				}
+			}));
+		});
+	}
+
+	/**
+	 * Does the page hold any real content before the overflow? A table header (repeated or not) and
+	 * empty ancestor shells don't count: breaking there would make no progress.
 	 * @param {Range} overflow the overflow range found on this page
 	 * @param {element} rendered the page's rendered content
 	 * @returns {boolean} true if some content precedes the overflow
 	 */
 	hasContentBefore(overflow, rendered) {
-		// Reject (skip with their whole subtree) every repeated <colgroup>/<thead>: a table can
-		// carry several in a row, and their text must never count as the page's content.
+		// Reject (skip with their whole subtree) every table header — the repeated copies and the
+		// table's own <thead> — and the repeated <colgroup>: a header with no rows under it is not
+		// progress, so a row that doesn't fit under it is made to fit instead of leaving the header
+		// alone on the page.
 		let walker = document.createTreeWalker(rendered, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
-			acceptNode: (n) => (isElement(n) && n.hasAttribute("data-repeated-header")) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+			acceptNode: (n) => (isElement(n) && (n.nodeName === "THEAD" || n.hasAttribute("data-repeated-header")))
+				? NodeFilter.FILTER_REJECT
+				: NodeFilter.FILTER_ACCEPT
 		});
 		let node;
 		let isVisibleLeafBox = (el) => {
