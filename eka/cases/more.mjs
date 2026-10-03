@@ -82,6 +82,7 @@ export default [
 	{ name: "image-height-cells", about: "Rows of uneven unbreakable heights (image stand-ins).", css: AVOID, body: c7.html, expect: { rows: c7.rows, thead: true, aligned: true } },
 	{ name: "long-paragraphs", about: "Plain flowing text across several pages.", body: Array.from({ length: 120 }, (_, i) => `<p data-line="${i}">Paragraph ${i + 1}. ${"Clinical notes continue across the page with ordinary sentences. ".repeat(3)}</p>`).join(""), expect: { lines: 120 } },
 	{ name: "long-list", about: "A bulleted list across pages.", body: `<ul>${Array.from({ length: 160 }, (_, i) => `<li data-line="${i}">Instruction ${i + 1}: take with water after food.</li>`).join("")}</ul>`, expect: { lines: 160 } },
+	{ name: "colgroup-tall-row-avoid", about: "A <colgroup> table with a row taller than a page, rows kept whole: the repeated colgroup and thead must not count as page content.", css: AVOID, body: table({ rows: 40, tall: { at: 11, lines: 70 }, colgroup: ["12%", "68%", "20%"], style: "table-layout: fixed" }), expect: { rows: 40, lines: 70, thead: true, stableWidths: true } },
 	{ name: "tall-row-in-long-table-avoid", about: "A 2-page row in the middle of a 100-row table, rows kept whole.", css: AVOID, body: table({ rows: 100, tall: { at: 47, lines: 140 } }), expect: { rows: 100, lines: 140, thead: true, aligned: true } },
 ];
 

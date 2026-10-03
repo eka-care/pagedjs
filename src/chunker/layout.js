@@ -583,18 +583,13 @@ class Layout {
 	 * @returns {boolean} true if some content precedes the overflow
 	 */
 	hasContentBefore(overflow, rendered) {
-		let walker = document.createTreeWalker(rendered, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
+		// Reject (skip with their whole subtree) every repeated <colgroup>/<thead>: a table can
+		// carry several in a row, and their text must never count as the page's content.
+		let walker = document.createTreeWalker(rendered, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
+			acceptNode: (n) => (isElement(n) && n.hasAttribute("data-repeated-header")) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+		});
 		let node;
 		while ((node = walker.nextNode())) {
-			if (isElement(node) && node.hasAttribute("data-repeated-header")) {
-				// Skip the repeated <thead>/<colgroup> and everything inside it
-				let next = nodeAfter(node, rendered);
-				if (!next) {
-					return false;
-				}
-				walker.currentNode = next;
-				node = next;
-			}
 			let isContent = isText(node)
 				? node.textContent.trim().length > 0
 				: ["IMG", "SVG", "VIDEO", "CANVAS", "IFRAME", "OBJECT", "EMBED", "HR", "INPUT"].includes(node.nodeName.toUpperCase());
