@@ -1,0 +1,137 @@
+# Eka fork: publish a release's dist/ to S3, served through CloudFront.
+# Runs when a release tag (v0.4.3-eka.N, see AGENTS.md) is pushed.
+#
+#   s3://m-prod-elixir-dr/main/pagedjs/<version>/   pinned: never changes once published
+#   s3://m-prod-elixir-dr/main/pagedjs/main/        the latest release: changes on every deploy
+name: eka cdn deploy
+
+on:
+  push:
+    tags: ["v0.4.3-eka.*"]
+
+permissions:
+  contents: read
+
+# Two tags pushed together must not race on main/.
+concurrency:
+  group: eka-cdn-deploy
+  cancel-in-progress: false
+
+env:
+  BUCKET: m-prod-elixir-dr
+  PREFIX: main/pagedjs
+
+# bash -eo pipefail: a failing command anywhere in a pipe fails the step.
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  verify:
+    name: Tag is a release on eka/main
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check the tag
+        id: version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          if [ "$VERSION" != "$PACKAGE_VERSION" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME doesn't match package.json version $PACKAGE_VERSION"
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor HEAD origin/eka/main; then
+            echo "::error::Tag $GITHUB_REF_NAME is not on eka/main"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    name: Publish to S3
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      VERSION: ${{ needs.verify.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # The 0.4.3 build config uses JSON import assertions, which Node 22 rejects.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Build dist/
+        run: |
+          npm ci --ignore-scripts
+          npm run build
+          npm run legacy
+          cd dist && sha256sum -- *.js | tee SHA256SUMS
+
+      - name: Configure AWS credentials (account 559615561845)
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
+        with:
+          role-to-assume: arn:aws:iam::559615561845:role/github-runner-role
+          role-session-name: pagedjs-runner
+          aws-region: ${{ secrets.PROD_AWS_Region }}
+
+      # Re-running a deploy is fine; publishing different files under a version that is already out
+      # would change documents for everyone pinned to it.
+      - name: Refuse to overwrite a published version with different files
+        run: |
+          if aws s3 ls "s3://$BUCKET/$PREFIX/$VERSION/SHA256SUMS" > /dev/null; then
+            aws s3 cp "s3://$BUCKET/$PREFIX/$VERSION/SHA256SUMS" "$RUNNER_TEMP/published-SHA256SUMS"
+            if ! diff -u "$RUNNER_TEMP/published-SHA256SUMS" dist/SHA256SUMS; then
+              echo "::error::$VERSION is already published with different files. Release a new version instead."
+              exit 1
+            fi
+          fi
+
+      # The version first, so main/ only moves once its files are all up.
+      - name: Upload to S3
+        run: |
+          aws s3 cp dist/ "s3://$BUCKET/$PREFIX/$VERSION/" --recursive \
+            --cache-control "public, max-age=31536000, immutable"
+          aws s3 cp dist/ "s3://$BUCKET/$PREFIX/main/" --recursive \
+            --cache-control "public, max-age=300"
+
+      # Only main/ changes in place. Both path forms, so this holds whether a distribution's origin
+      # path is the bucket root or /main.
+      - name: Invalidate CloudFront (account 559615561845)
+        run: |
+          for id in E3NVM02TW09UUA EQBEV8J9LOT10; do
+            aws cloudfront create-invalidation --distribution-id "$id" \
+              --paths "/pagedjs/main/*" "/main/pagedjs/main/*"
+          done
+
+      - name: Configure AWS credentials (account 352505432382)
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
+        with:
+          role-to-assume: arn:aws:iam::352505432382:role/github-runner-role
+          role-session-name: pagedjs-runner
+          aws-region: ${{ secrets.PROD_AWS_Region }}
+
+      - name: Invalidate CloudFront (account 352505432382)
+        run: |
+          aws cloudfront create-invalidation --distribution-id E1W0QLUC7XC968 \
+            --paths "/pagedjs/main/*" "/main/pagedjs/main/*"
+
+      - name: Summary
+        run: |
+          {
+            echo "### Published pagedjs $VERSION"
+            echo "- \`s3://$BUCKET/$PREFIX/$VERSION/\`"
+            echo "- \`s3://$BUCKET/$PREFIX/main/\`"
+            echo '```'
+            cat dist/SHA256SUMS
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
