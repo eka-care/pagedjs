@@ -1,0 +1,137 @@
+# Eka fork: publish dist/ to the prod S3 bucket, served through CloudFront.
+# Runs on any pushed v0.4.3-eka.* tag, from any branch: nothing checks the commit is on eka/main.
+# Try a build on dev first (eka-cdn-deploy-dev.yml).
+#
+#   s3://m-prod-elixir-dr/main/pagedjs/<version>/   pinned: never changes once published
+#   s3://m-prod-elixir-dr/main/pagedjs/main/        the last tag deployed: changes on every deploy
+name: eka cdn deploy
+
+on:
+  push:
+    tags: ["v0.4.3-eka.*"]
+
+permissions:
+  contents: read
+
+# Two tags pushed together must not race on main/.
+concurrency:
+  group: eka-cdn-deploy
+  cancel-in-progress: false
+
+env:
+  BUCKET: m-prod-elixir-dr
+  PREFIX: main/pagedjs
+  # secrets.PROD_AWS_Region isn't set on this repo; hardcoded until that's sorted out.
+  AWS_REGION: ap-south-1
+
+# bash -eo pipefail: a failing command anywhere in a pipe fails the step.
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  deploy:
+    name: Publish to S3
+    runs-on: prod-runner-server
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve version from the tag
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+
+      # The 0.4.3 build config uses JSON import assertions, which Node 22 rejects.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      # The version comes from the tag, so each file's license banner names the folder it's in.
+      - name: Build dist/
+        run: |
+          npm ci --ignore-scripts
+          npm pkg set version="$VERSION"
+          npm run build
+          npm run legacy
+          cd dist && sha256sum -- *.js | tee SHA256SUMS
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
+        with:
+          role-to-assume: arn:aws:iam::559615561845:role/github-runner-role
+          role-session-name: pagedjs-runner
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Re-running a deploy is fine; publishing different files under a version that is already out
+      # would change documents for everyone pinned to it. Any S3 error fails the step rather than
+      # reading as "not published yet".
+      - name: Refuse to overwrite a published version with different files
+        run: |
+          KEY="$PREFIX/$VERSION/SHA256SUMS"
+          FOUND=$(aws s3api list-objects-v2 --bucket "$BUCKET" --prefix "$KEY" \
+            --query "Contents[?Key=='$KEY'].Key" --output text)
+          if [ "$FOUND" = "$KEY" ]; then
+            aws s3 cp "s3://$BUCKET/$KEY" "$RUNNER_TEMP/published-SHA256SUMS"
+            if ! diff -u "$RUNNER_TEMP/published-SHA256SUMS" dist/SHA256SUMS; then
+              echo "::error::$VERSION is already published with different files. Release a new version instead."
+              exit 1
+            fi
+          fi
+
+      # The version first, so main/ only moves once its files are all up.
+      - name: Upload to S3
+        run: |
+          aws s3 cp dist/ "s3://$BUCKET/$PREFIX/$VERSION/" --recursive \
+            --cache-control "public, max-age=31536000, immutable"
+          aws s3 cp dist/ "s3://$BUCKET/$PREFIX/main/" --recursive \
+            --cache-control "public, max-age=300"
+
+      - name: Summary
+        run: |
+          {
+            echo "### Published pagedjs $VERSION"
+            echo "- \`s3://$BUCKET/$PREFIX/$VERSION/\`"
+            echo "- \`s3://$BUCKET/$PREFIX/main/\`"
+            echo '```'
+            cat dist/SHA256SUMS
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # Its own job, as in patient-docs-sdk: if it fails, the upload above still shows as done, and this
+  # can be re-run alone.
+  invalidate-cache:
+    name: Invalidate CloudFront
+    needs: deploy
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
+        with:
+          role-to-assume: arn:aws:iam::559615561845:role/github-runner-role
+          role-session-name: pagedjs-runner
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Only main/ changes in place. Both path forms, so this holds whether a distribution's origin
+      # path is the bucket root or /main.
+      - name: Invalidate CloudFront
+        run: |
+          for id in E3NVM02TW09UUA EQBEV8J9LOT10; do
+            aws cloudfront create-invalidation --distribution-id "$id" \
+              --paths "/pagedjs/main/*" "/main/pagedjs/main/*"
+          done
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
+        with:
+          role-to-assume: arn:aws:iam::352505432382:role/github-runner-role
+          role-session-name: pagedjs-runner
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Invalidate CloudFront
+        run: |
+          aws cloudfront create-invalidation --distribution-id E1W0QLUC7XC968 \
+            --paths "/pagedjs/main/*" "/main/pagedjs/main/*"
