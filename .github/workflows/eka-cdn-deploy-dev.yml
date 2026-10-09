@@ -1,0 +1,92 @@
+# Eka fork: publish dist/ to the dev S3 bucket, served through CloudFront, to try a build before it
+# goes to prod (eka-cdn-deploy.yml). Runs on any pushed dev-* tag, from any branch.
+#
+#   s3://elixir-dr-dev/main/pagedjs/<version>/   https://elixir-dr.dev.eka.care/pagedjs/<version>/
+#   s3://elixir-dr-dev/main/pagedjs/main/        https://elixir-dr.dev.eka.care/pagedjs/main/
+#
+# Tag dev-0.4.3-eka.8 publishes to pagedjs/0.4.3-eka.8/. Unlike prod, a version can be published
+# again with different files, so nothing here is cached for long.
+name: eka cdn deploy (dev)
+
+on:
+  push:
+    tags: ["dev-*"]
+
+permissions:
+  contents: read
+
+# Two tags pushed together must not race on main/.
+concurrency:
+  group: eka-cdn-deploy-dev
+  cancel-in-progress: false
+
+env:
+  BUCKET: elixir-dr-dev
+  PREFIX: main/pagedjs
+  # As on prod, the region secret (secrets.DEV_AWS_Region) isn't relied on; hardcoded.
+  AWS_REGION: ap-south-1
+
+# bash -eo pipefail: a failing command anywhere in a pipe fails the step.
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  deploy:
+    name: Publish to S3
+    runs-on: dev-runner-server
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve version from the tag
+        run: echo "VERSION=${GITHUB_REF_NAME#dev-}" >> "$GITHUB_ENV"
+
+      # The 0.4.3 build config uses JSON import assertions, which Node 22 rejects.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      # The version comes from the tag, so each file's license banner names the folder it's in.
+      - name: Build dist/
+        run: |
+          npm ci --ignore-scripts
+          npm pkg set version="$VERSION"
+          npm run build
+          npm run legacy
+          cd dist && sha256sum -- *.js | tee SHA256SUMS
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
+        with:
+          role-to-assume: arn:aws:iam::607765814920:role/github-runner-role
+          role-session-name: pagedjs-runner
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Upload to S3
+        run: |
+          aws s3 cp dist/ "s3://$BUCKET/$PREFIX/$VERSION/" --recursive --cache-control "public, max-age=300"
+          aws s3 cp dist/ "s3://$BUCKET/$PREFIX/main/" --recursive --cache-control "public, max-age=300"
+
+      # elixir-dr.dev.eka.care serves the bucket's main/ at its root, so main/pagedjs/ is /pagedjs/ on
+      # the CDN; the second form covers a distribution whose origin is the bucket root.
+      - name: Invalidate CloudFront
+        run: |
+          for id in ERYGWO56QYEYB E2MUDDS4SQLH7S; do
+            aws cloudfront create-invalidation --distribution-id "$id" \
+              --paths "/pagedjs/*" "/main/pagedjs/*"
+          done
+
+      - name: Summary
+        run: |
+          {
+            echo "### Published pagedjs $VERSION to dev"
+            echo "- https://elixir-dr.dev.eka.care/pagedjs/$VERSION/paged.polyfill.js"
+            echo "- https://elixir-dr.dev.eka.care/pagedjs/main/paged.polyfill.js"
+            echo '```'
+            cat dist/SHA256SUMS
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
